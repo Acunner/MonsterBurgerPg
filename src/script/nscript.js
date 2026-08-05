@@ -315,7 +315,7 @@ function gridCardHTML(d, i, opts = {}) {
         </button>
         ${removeFav ? `<button class="grid-card__fav-remove" data-key="${d.key}" aria-label="Remover dos favoritos">★</button>` : ''}
         <img src="${d.img}" alt="${d.name}" loading="lazy" width="200" height="280"
-             onerror="this.src='${placeholderImg(d.name, 200, 280, '111111', 'ffffff')}'"/>
+             onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
       </div>
       <div class="grid-card__body">
         <p class="grid-card__brand-tag">${d.brandLabel}</p>
@@ -564,7 +564,7 @@ function renderCartItem(obj) {
   return `
     <div class="cart-item" data-key="${d.key}">
       <img class="cart-item__img" src="${d.img}" alt="${d.name}" width="60" height="80"
-           onerror="this.src='${placeholderImg('img', 60, 80, '111111', 'ffffff')}'"/>
+           onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
       <div class="cart-item__info">
         <p class="cart-item__name">${d.name}</p>
         <p class="cart-item__price">${toBRL(price * qty)}</p>
