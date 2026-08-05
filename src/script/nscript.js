@@ -393,24 +393,6 @@ function updateCount(n) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BUSCA
-   ═══════════════════════════════════════════════════════════ */
-function initSearch() {
-  const input = document.getElementById('search-input');
-  if (!input) return;
-  let timer;
-  input.addEventListener('input', function() {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      _searchQuery = this.value.trim();
-      if (activeScreen !== 'home')
-        document.querySelector('.botonBar .list[data-target="home"]')?.click();
-      applyFilters();
-    }, 200);
-  });
-}
-
-/* ═══════════════════════════════════════════════════════════
    CARRINHO — completo
    ═══════════════════════════════════════════════════════════ */
 
@@ -1400,7 +1382,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   Auth.load();
   initSwiper();
   initBottomBar();
-  initSearch();
   await loadCatalog();       // carrega produtos do banco → renderBrands + renderGrid
   initDealTimer();
   if (Auth.isLoggedIn()) syncFavoritesFromServer();

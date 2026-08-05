@@ -45,35 +45,6 @@ function v($path) {
       <!-- ══════════════════ HEADER ══════════════════ -->
       <header class="topBar">
         <div class="topBar__logo">Rock Burger</div>
-        <div class="search-container">
-          <input
-            type="text"
-            id="search-input"
-            placeholder="Buscar produto..."
-            autocomplete="off"
-          />
-          <svg
-            class="search-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M21 21L16.5 16.5"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <circle
-              cx="10"
-              cy="10"
-              r="7"
-              stroke="currentColor"
-              stroke-width="2"
-            />
-          </svg>
-        </div>
         <button class="topBar__hamburger" aria-label="Menu">☰</button>
       </header>
 
