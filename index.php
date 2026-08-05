@@ -23,8 +23,8 @@ function v($path) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Taberna - Bebidas Premium" />
-    <title>Taberna - Bebidas Premium</title>
+    <meta name="description" content="Rock Burger - Lanches e Combos" />
+    <title>Rock Burger - Lanches e Combos</title>
 
     <!-- Fontes externas (sem cache busting — CDN gerencia) -->
     <link
@@ -44,7 +44,7 @@ function v($path) {
     <div id="app">
       <!-- ══════════════════ HEADER ══════════════════ -->
       <header class="topBar">
-        <div class="topBar__logo">Taberna</div>
+        <div class="topBar__logo">Rock Burger</div>
         <div class="search-container">
           <input
             type="text"
@@ -88,19 +88,19 @@ function v($path) {
                   <article class="product-card" data-product-id="1">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Coca+Cola+2L"
-                        alt="Coca Cola 2L"
+                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=X-Burger"
+                        alt="X-Burger"
                         loading="lazy"
                         width="200"
                         height="320"
                       />
                     </div>
                     <div class="product-card__info">
-                      <h2 class="product-card__name">Coca Cola 2L</h2>
+                      <h2 class="product-card__name">X-Burger</h2>
                       <div class="product-card__rating" aria-label="Avaliação: 5 estrelas">★★★★★</div>
                     </div>
                     <div class="product-card__footer">
-                      <span class="product-card__price">R$ 12,99</span>
+                      <span class="product-card__price">R$ 18,90</span>
                       <button class="product-card__button">Comprar</button>
                     </div>
                   </article>
@@ -109,19 +109,19 @@ function v($path) {
                   <article class="product-card" data-product-id="2">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Guaraná+2L"
-                        alt="Guaraná 2L"
+                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Combo+Rock"
+                        alt="Combo Rock Burger"
                         loading="lazy"
                         width="200"
                         height="320"
                       />
                     </div>
                     <div class="product-card__info">
-                      <h2 class="product-card__name">Guaraná 2L</h2>
-                      <div class="product-card__rating" aria-label="Avaliação: 4 estrelas">★★★★☆</div>
+                      <h2 class="product-card__name">Combo Rock Burger</h2>
+                      <div class="product-card__rating" aria-label="Avaliação: 5 estrelas">★★★★★</div>
                     </div>
                     <div class="product-card__footer">
-                      <span class="product-card__price">R$ 10,50</span>
+                      <span class="product-card__price">R$ 34,90</span>
                       <button class="product-card__button">Comprar</button>
                     </div>
                   </article>
@@ -130,19 +130,19 @@ function v($path) {
                   <article class="product-card" data-product-id="3">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Cerveja+Premium"
-                        alt="Cerveja Premium"
+                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Batata+Frita"
+                        alt="Batata Frita"
                         loading="lazy"
                         width="200"
                         height="320"
                       />
                     </div>
                     <div class="product-card__info">
-                      <h2 class="product-card__name">Cerveja Premium</h2>
-                      <div class="product-card__rating" aria-label="Avaliação: 5 estrelas">★★★★★</div>
+                      <h2 class="product-card__name">Batata Frita</h2>
+                      <div class="product-card__rating" aria-label="Avaliação: 4 estrelas">★★★★☆</div>
                     </div>
                     <div class="product-card__footer">
-                      <span class="product-card__price">R$ 18,00</span>
+                      <span class="product-card__price">R$ 14,00</span>
                       <button class="product-card__button">Comprar</button>
                     </div>
                   </article>
@@ -151,19 +151,19 @@ function v($path) {
                   <article class="product-card" data-product-id="4">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Vinho+Tinto"
-                        alt="Vinho Tinto"
+                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Onion+Rings"
+                        alt="Onion Rings"
                         loading="lazy"
                         width="200"
                         height="320"
                       />
                     </div>
                     <div class="product-card__info">
-                      <h2 class="product-card__name">Vinho Tinto</h2>
+                      <h2 class="product-card__name">Onion Rings</h2>
                       <div class="product-card__rating" aria-label="Avaliação: 5 estrelas">★★★★★</div>
                     </div>
                     <div class="product-card__footer">
-                      <span class="product-card__price">R$ 75,00</span>
+                      <span class="product-card__price">R$ 16,50</span>
                       <button class="product-card__button">Comprar</button>
                     </div>
                   </article>
@@ -172,19 +172,19 @@ function v($path) {
                   <article class="product-card" data-product-id="5">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Água+Mineral"
-                        alt="Água Mineral"
+                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Milkshake"
+                        alt="Milkshake"
                         loading="lazy"
                         width="200"
                         height="320"
                       />
                     </div>
                     <div class="product-card__info">
-                      <h2 class="product-card__name">Água Mineral</h2>
+                      <h2 class="product-card__name">Milkshake</h2>
                       <div class="product-card__rating" aria-label="Avaliação: 4 estrelas">★★★★☆</div>
                     </div>
                     <div class="product-card__footer">
-                      <span class="product-card__price">R$ 3,50</span>
+                      <span class="product-card__price">R$ 15,00</span>
                       <button class="product-card__button">Comprar</button>
                     </div>
                   </article>
@@ -193,19 +193,19 @@ function v($path) {
                   <article class="product-card" data-product-id="6">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Whisky"
-                        alt="Whisky"
+                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Coca-Cola"
+                        alt="Coca-Cola"
                         loading="lazy"
                         width="200"
                         height="320"
                       />
                     </div>
                     <div class="product-card__info">
-                      <h2 class="product-card__name">Whisky</h2>
+                      <h2 class="product-card__name">Coca-Cola</h2>
                       <div class="product-card__rating" aria-label="Avaliação: 5 estrelas">★★★★★</div>
                     </div>
                     <div class="product-card__footer">
-                      <span class="product-card__price">R$ 120,00</span>
+                      <span class="product-card__price">R$ 8,00</span>
                       <button class="product-card__button">Comprar</button>
                     </div>
                   </article>

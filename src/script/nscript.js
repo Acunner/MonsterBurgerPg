@@ -74,17 +74,17 @@ function normalizeProduct(row) {
   return {
     id:         Number(row.id),
     table:      row.table_name,
-    category:   row.table_name,   // CERVEJAS | REFRIGERANTES | VODKAS_E_ALCOOLICOS
+    category:   row.table_name,   // LANCHES | COMBOS | ACOMPANHAMENTOS | BEBIDAS | INGREDIENTES
     key:        String(row.id),   // ID global unico (1-99, 100-199, 200-299)
     brand:      brandId,
     brandLabel: row.marca || 'Outros',
-    name:       row.nome + ' ' + row.ml + 'ml',
+    name:       row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
     price:      Number(row.preco),
     salePrice:  onSale ? Number(row.valor_promocional) : null,
     onSale:     onSale,
     dealExpiresAt: row.promocao_expira_em || null,
     stars:      Math.round(Number(row.rate || 4)),
-    badge:      Number(row.retornavel) ? 'Retornável' : null,
+    badge:      Number(row.retornavel) ? 'Vegetariano' : null,
     img:        '/src/img/' + row.img,
   };
 }
@@ -101,7 +101,8 @@ async function loadCatalog() {
     return;
   }
 
-  // IDs globalmente unicos: CERVEJAS 1-99, REFRIGERANTES 100-199, VODKAS 200-299
+  // IDs globalmente unicos: LANCHES 1-99, COMBOS 100-199, ACOMPANHAMENTOS 200-299,
+  // BEBIDAS 300-399, INGREDIENTES 400-499
   // Sem necessidade de deduplicacao — cada linha tem ID unico
   DRINKS = catRes.data.map(normalizeProduct);
   DEALS  = dealRes.ok ? dealRes.data.map(normalizeProduct) : [];
@@ -823,7 +824,7 @@ async function checkout() {
     return obj.qty + 'x ' + obj.drink.name + ' – ' + toBRL((obj.drink.salePrice||obj.drink.price)*obj.qty);
   }).join('%0A');
 
-  let msg = '*Novo Pedido Taberna %23' + orderId + '*%0A%0A';
+  let msg = '*Novo Pedido Rock Burger %23' + orderId + '*%0A%0A';
   msg += '*Itens:*%0A' + itemsText + '%0A%0A';
   if (discount > 0) msg += '*Desconto (' + checkoutState.couponCode + '):* − ' + toBRL(discount) + '%0A';
   msg += '*Total: ' + toBRL(total) + '*%0A';
@@ -898,10 +899,12 @@ function renderFavorites() {
 let activeDealCategory = 'todos';
 
 const DEAL_CATEGORIES = [
-  { id: 'todos',               label: 'Todos' },
-  { id: 'CERVEJAS',             label: 'Cervejas' },
-  { id: 'REFRIGERANTES',        label: 'Refrigerantes' },
-  { id: 'VODKAS_E_ALCOOLICOS',  label: 'Alcoólicos' },
+  { id: 'todos',            label: 'Todos' },
+  { id: 'LANCHES',          label: 'Lanches' },
+  { id: 'COMBOS',           label: 'Combos' },
+  { id: 'ACOMPANHAMENTOS',  label: 'Acompanhamentos' },
+  { id: 'BEBIDAS',          label: 'Bebidas' },
+  { id: 'INGREDIENTES',     label: 'Ingredientes' },
 ];
 
 function dealDiscountPct(d) {
@@ -1049,8 +1052,8 @@ function buildAuthForm() {
   return `
   <div class="page-wrapper">
     <div class="auth-card">
-      <div class="auth-card__logo">Taberna</div>
-      <p class="auth-card__tagline">Suas bebidas favoritas, sempre à mão.</p>
+      <div class="auth-card__logo">Rock Burger</div>
+      <p class="auth-card__tagline">Seus lanches favoritos, sempre à mão.</p>
       <div class="auth-tabs" role="tablist">
         <button class="auth-tab auth-tab--active" data-tab="login"    role="tab" aria-selected="true">Entrar</button>
         <button class="auth-tab"                  data-tab="register" role="tab" aria-selected="false">Cadastrar</button>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Taberna — Painel Admin</title>
+<title>Rock Burger — Painel Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -189,10 +189,10 @@ a{text-decoration:none;color:inherit;}
 <!-- ══ LOGIN ══ -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">Taberna</div>
+    <div class="login-logo">Rock Burger</div>
     <p class="login-sub">Painel de Funcionários</p>
     <form id="login-form" onsubmit="return false">
-      <div class="field"><label>E-mail</label><input id="l-email" type="email" placeholder="admin@taberna.com" autocomplete="email"/></div>
+      <div class="field"><label>E-mail</label><input id="l-email" type="email" placeholder="admin@rockburger.com" autocomplete="email"/></div>
       <div class="field"><label>Senha</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
       <p class="err-msg" id="l-err"></p>
       <button class="btn btn-primary" style="width:100%;margin-top:.5rem" id="btn-login">Entrar</button>
@@ -206,7 +206,7 @@ a{text-decoration:none;color:inherit;}
 
     <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar__logo">Taberna <span>Admin Panel</span></div>
+      <div class="sidebar__logo">Rock Burger <span>Admin Panel</span></div>
       <nav class="sidebar__nav">
         <div class="nav-item active" data-panel="dashboard"><span class="nav-item__icon">📊</span> Dashboard</div>
         <div class="nav-item" data-panel="orders"><span class="nav-item__icon">📦</span> Pedidos</div>
@@ -292,9 +292,11 @@ a{text-decoration:none;color:inherit;}
           <div class="toolbar">
             <select id="prod-filter-table">
               <option value="">Todas as categorias</option>
-              <option value="CERVEJAS">Cervejas</option>
-              <option value="REFRIGERANTES">Refrigerantes</option>
-              <option value="VODKAS_E_ALCOOLICOS">Alcoólicos</option>
+              <option value="LANCHES">Lanches</option>
+              <option value="COMBOS">Combos</option>
+              <option value="ACOMPANHAMENTOS">Acompanhamentos</option>
+              <option value="BEBIDAS">Bebidas</option>
+              <option value="INGREDIENTES">Ingredientes</option>
             </select>
             <input type="text" id="prod-search" placeholder="Buscar produto…"/>
             <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)">
@@ -304,7 +306,7 @@ a{text-decoration:none;color:inherit;}
           <div class="table-wrap">
             <table>
               <thead><tr>
-                <th>ID</th><th>Nome</th><th>Marca</th><th>ML</th>
+                <th>ID</th><th>Nome</th><th>Marca</th><th>Peso/Vol.</th>
                 <th>Custo</th><th>Preço</th><th>Margem</th><th>Oferta</th><th>Estoque</th><th>Rate</th><th>Ações</th>
               </tr></thead>
               <tbody id="products-tbody"></tbody>
@@ -557,15 +559,17 @@ a{text-decoration:none;color:inherit;}
     <input type="hidden" id="mp-table"/><input type="hidden" id="mp-id"/>
     <div class="field"><label>Categoria</label>
       <select id="mp-cat">
-        <option value="CERVEJAS">Cervejas</option>
-        <option value="REFRIGERANTES">Refrigerantes</option>
-        <option value="VODKAS_E_ALCOOLICOS">Alcoólicos</option>
+        <option value="LANCHES">Lanches</option>
+        <option value="COMBOS">Combos</option>
+        <option value="ACOMPANHAMENTOS">Acompanhamentos</option>
+        <option value="BEBIDAS">Bebidas</option>
+        <option value="INGREDIENTES">Ingredientes</option>
       </select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
       <div class="field"><label>Nome</label><input id="mp-nome" type="text"/></div>
       <div class="field"><label>Marca</label><input id="mp-marca" type="text"/></div>
-      <div class="field"><label>ML</label><input id="mp-ml" type="number"/></div>
+      <div class="field"><label>Peso/Vol. (g ou ml)</label><input id="mp-ml" type="number"/></div>
       <div class="field"><label>Avaliação (0-5)</label><input id="mp-rate" type="number" step=".1" min="0" max="5"/></div>
       <div class="field"><label>Custo (R$)</label><input id="mp-custo" type="number" step=".01"/></div>
       <div class="field"><label>Preço (R$)</label><input id="mp-preco" type="number" step=".01"/></div>
@@ -574,7 +578,7 @@ a{text-decoration:none;color:inherit;}
       </div>
       <div class="field"><label>Preço promocional</label><input id="mp-promo-val" type="number" step=".01"/></div>
       <div class="field"><label>Estoque</label><input id="mp-estoque" type="number"/></div>
-      <div class="field"><label>Retornável?</label>
+      <div class="field"><label>Vegetariano?</label>
         <select id="mp-ret"><option value="0">Não</option><option value="1">Sim</option></select>
       </div>
     </div>
@@ -900,7 +904,7 @@ function renderProducts(){
   const cat = $('prod-filter-table').value;
   const q   = $('prod-search').value.toLowerCase();
   const sortMargin = $('prod-sort-margin').checked;
-  const CAT = {CERVEJAS:'Cervejas',REFRIGERANTES:'Refrigerantes',VODKAS_E_ALCOOLICOS:'Alcoólicos'};
+  const CAT = {LANCHES:'Lanches',COMBOS:'Combos',ACOMPANHAMENTOS:'Acompanhamentos',BEBIDAS:'Bebidas',INGREDIENTES:'Ingredientes'};
   let filtered = allProducts.filter(p=>
     (!cat || p.table_name===cat) &&
     (!q   || p.nome.toLowerCase().includes(q) || p.marca.toLowerCase().includes(q))
@@ -915,7 +919,7 @@ function renderProducts(){
       <td>${p.id}</td>
       <td><strong>${p.nome}</strong><br><small style="color:var(--muted)">${CAT[p.table_name]||p.table_name}</small></td>
       <td>${p.marca}</td>
-      <td>${p.ml}ml</td>
+      <td>${p.ml}${p.table_name==='BEBIDAS'?'ml':'g'}</td>
       <td>${toBRL(p.preco_de_compra||0)}</td>
       <td><strong>${toBRL(p.preco)}</strong></td>
       <td><strong style="color:${marginColor}">${margin.toFixed(0)}%</strong></td>
@@ -960,9 +964,9 @@ window.endDeal = async function(table, id){
 window.openProductModal = function(table, id){
   const p = allProducts.find(x=>x.table_name===table && Number(x.id)===id);
   $('mp-title').textContent = p ? 'Editar Produto' : 'Novo Produto';
-  $('mp-table').value = p?.table_name||table||'CERVEJAS';
+  $('mp-table').value = p?.table_name||table||'LANCHES';
   $('mp-id').value    = p?.id||'';
-  $('mp-cat').value   = p?.table_name||'CERVEJAS';
+  $('mp-cat').value   = p?.table_name||'LANCHES';
   $('mp-nome').value  = p?.nome||'';
   $('mp-marca').value = p?.marca||'';
   $('mp-ml').value    = p?.ml||'';
@@ -1223,7 +1227,7 @@ function renderProductsCost(){
     if(!res.ok) return;
     el.innerHTML = res.data.map(p=>`
       <div class="prod-cost-row" data-table="${p.table_name}" data-id="${p.id}">
-        <span>${p.nome} ${p.ml}ml <small style="color:var(--muted)">(${p.marca})</small></span>
+        <span>${p.nome} ${p.ml}${p.table_name==='BEBIDAS'?'ml':'g'} <small style="color:var(--muted)">(${p.marca})</small></span>
         <input type="number" step="0.01" value="${p.preco_de_compra||''}" placeholder="0,00"
                data-orig="${p.preco_de_compra||0}"/>
         <button class="btn btn-ghost" style="font-size:.72rem;padding:4px 10px"

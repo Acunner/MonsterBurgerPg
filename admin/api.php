@@ -103,7 +103,7 @@ if($method==='GET' && preg_match('#^/orders/(\d+)/items$#',$path,$pm)){
 if($method==='GET' && $path==='/products'){
     auth_staff();
     $all=[];
-    foreach(['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'] as $t){
+    foreach(['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'] as $t){
         $rows=db()->query("SELECT *,'$t' AS table_name FROM `$t` ORDER BY id")->fetchAll();
         foreach($rows as $r) $all[]=$r;
     }
@@ -113,7 +113,7 @@ if($method==='GET' && $path==='/products'){
 // PUT /products/{table}/{id}
 if($method==='PUT' && preg_match('#^/products/([A-Z_]+)/(\d+)$#',$path,$pm)){
     auth_staff();
-    $allowed=['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'];
+    $allowed=['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'];
     $table=$pm[1]; $id=(int)$pm[2];
     if(!in_array($table,$allowed)) json_err('Tabela inválida.');
     $b=body();
@@ -134,7 +134,7 @@ if($method==='PUT' && preg_match('#^/products/([A-Z_]+)/(\d+)$#',$path,$pm)){
 // POST /products/{table}
 if($method==='POST' && preg_match('#^/products/([A-Z_]+)$#',$path,$pm)){
     auth_staff();
-    $allowed=['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'];
+    $allowed=['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'];
     $table=$pm[1];
     if(!in_array($table,$allowed)) json_err('Tabela inválida.');
     $b=body();
@@ -156,7 +156,7 @@ if($method==='POST' && preg_match('#^/products/([A-Z_]+)$#',$path,$pm)){
 if($method==='DELETE' && preg_match('#^/products/([A-Z_]+)/(\d+)$#',$path,$pm)){
     $staff=auth_staff();
     if($staff['role']!=='admin') json_err('Apenas admin pode excluir.',403);
-    $allowed=['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'];
+    $allowed=['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'];
     if(!in_array($pm[1],$allowed)) json_err('Tabela inválida.');
     db()->prepare("DELETE FROM `{$pm[1]}` WHERE id=?")->execute([(int)$pm[2]]);
     json_ok('Produto excluído.');
@@ -362,7 +362,7 @@ if($method==='GET' && $path==='/pricing'){
 
     // Produtos com custo de compra preenchido
     $products = [];
-    foreach(['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'] as $t){
+    foreach(['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'] as $t){
         $rows = $pdo->query("SELECT id, nome, ml, marca, preco, preco_de_compra, '$t' AS table_name FROM `$t` WHERE preco_de_compra > 0 ORDER BY nome")->fetchAll();
         foreach($rows as $r) $products[] = $r;
     }
@@ -421,7 +421,7 @@ if($method==='PUT' && $path==='/pricing/config'){
 // PUT /pricing/product/{table}/{id} — atualiza custo de compra do produto
 if($method==='PUT' && preg_match('#^/pricing/product/([A-Z_]+)/(\d+)$#',$path,$pm)){
     auth_staff();
-    $allowed=['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'];
+    $allowed=['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'];
     if(!in_array($pm[1],$allowed)) json_err('Tabela inválida.');
     $b=body();
     db()->prepare("UPDATE `{$pm[1]}` SET preco_de_compra=? WHERE id=?")->execute([(float)($b['cost']??0),(int)$pm[2]]);
@@ -435,7 +435,7 @@ if($method==='PUT' && preg_match('#^/pricing/product/([A-Z_]+)/(\d+)$#',$path,$p
 // PUT /products/{table}/{id}/deal — ativa oferta por N horas
 if($method==='PUT' && preg_match('#^/products/([A-Z_]+)/(\d+)/deal$#',$path,$pm)){
     auth_staff();
-    $allowed=['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'];
+    $allowed=['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'];
     $table=$pm[1]; $id=(int)$pm[2];
     if(!in_array($table,$allowed)) json_err('Tabela inválida.');
     $b=body();
@@ -451,7 +451,7 @@ if($method==='PUT' && preg_match('#^/products/([A-Z_]+)/(\d+)/deal$#',$path,$pm)
 // DELETE /products/{table}/{id}/deal — encerra oferta manualmente
 if($method==='DELETE' && preg_match('#^/products/([A-Z_]+)/(\d+)/deal$#',$path,$pm)){
     auth_staff();
-    $allowed=['CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS'];
+    $allowed=['LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES'];
     if(!in_array($pm[1],$allowed)) json_err('Tabela inválida.');
     db()->prepare("UPDATE `{$pm[1]}` SET promocao=0, promocao_expira_em=NULL WHERE id=?")->execute([(int)$pm[2]]);
     json_ok('Oferta encerrada.');

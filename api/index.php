@@ -1,6 +1,6 @@
 <?php
 // ═══════════════════════════════════════════════════════════
-//  api/index.php — Taberna API  (PHP 7.2+ / MariaDB)
+//  api/index.php — Rock Burger API  (PHP 7.2+ / MariaDB)
 // ═══════════════════════════════════════════════════════════
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
@@ -70,7 +70,7 @@ if ($path === '') $path = '/';
    CATÁLOGO
    ════════════════════════════════════════════════════════════ */
 if ($method==='GET' && $path==='/catalog') {
-    $tables = array('CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS');
+    $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
     $all = array();
     foreach ($tables as $t) {
         $rows = db()->query("SELECT *,'$t' AS table_name FROM `$t` ORDER BY id")->fetchAll();
@@ -79,7 +79,7 @@ if ($method==='GET' && $path==='/catalog') {
     json_ok($all);
 }
 if ($method==='GET' && $path==='/catalog/deals') {
-    $tables = array('CERVEJAS','REFRIGERANTES','VODKAS_E_ALCOOLICOS');
+    $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
     $all = array();
     foreach ($tables as $t) {
         $rows = db()->query(
@@ -289,7 +289,7 @@ if ($method==='POST' && $path==='/orders') {
             $ins->execute(array(
                 $oid,
                 (int)(isset($it['id'])         ? $it['id']         : 0),
-                isset($it['table_name'])        ? $it['table_name'] : 'CERVEJAS',
+                isset($it['table_name'])        ? $it['table_name'] : 'LANCHES',
                 isset($it['name'])              ? $it['name']       : '',
                 (float)(isset($it['price'])     ? $it['price']      : 0),
                 (int)(isset($it['qty'])         ? $it['qty']        : 1),
