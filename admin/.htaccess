@@ -1,0 +1,11 @@
+Options -Indexes
+DirectoryIndex index.html
+
+RewriteEngine On
+
+# Arquivos reais passam direto (index.html, api.php, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Tudo que não é arquivo real vai para api.php
+RewriteRule ^api$ api.php [QSA,L]
+RewriteRule ^api/(.*)$ api.php [QSA,L]

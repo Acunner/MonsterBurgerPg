@@ -1,0 +1,10 @@
+# Credenciais reais do banco - nunca versionar
+api/config.php
+
+# Backdoors de debug - nao devem ir para o repo (e devem ser removidos do servidor)
+api/debug.php
+admin/debug.php
+
+# Diversos
+.DS_Store
+Thumbs.db
