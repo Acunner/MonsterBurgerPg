@@ -9,7 +9,7 @@
 <style>
 :root{
   --bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2d3147;
-  --accent:#e0b23e;--accent2:#b87333;--danger:#e05555;--success:#4caf50;
+  --accent:#ff2d95;--accent2:#c7187a;--danger:#e05555;--success:#4caf50;
   --text:#f0f0f0;--muted:#8892a4;--font:'Inter',sans-serif;
   --radius:10px;--sidebar:220px;
 }
@@ -60,7 +60,7 @@ a{text-decoration:none;color:inherit;}
 .sidebar__nav{flex:1;padding:.5rem 0;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;color:var(--muted);font-size:.85rem;cursor:pointer;transition:background .15s,color .15s;border-radius:6px;margin:0 .5rem;}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
-.nav-item.active{background:rgba(224,178,62,.12);color:var(--accent);}
+.nav-item.active{background:rgba(255,45,149,.12);color:var(--accent);}
 .nav-item__icon{font-size:1rem;width:20px;text-align:center;}
 .sidebar__footer{padding:1rem;border-top:1px solid var(--border);}
 .staff-badge{font-size:.75rem;color:var(--muted);margin-bottom:.5rem;}
@@ -100,7 +100,7 @@ a{text-decoration:none;color:inherit;}
 .table-wrap td{padding:10px 14px;border-top:1px solid var(--border);font-size:.83rem;vertical-align:middle;}
 .table-wrap tr:hover td{background:rgba(255,255,255,.02);}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:600;}
-.badge-pendente{background:rgba(224,178,62,.15);color:var(--accent);}
+.badge-pendente{background:rgba(255,45,149,.15);color:var(--accent);}
 .badge-confirmado{background:rgba(76,175,80,.15);color:var(--success);}
 .badge-em_preparo{background:rgba(33,150,243,.15);color:#64b5f6;}
 .badge-em_entrega{background:rgba(156,39,176,.15);color:#ce93d8;}
@@ -146,7 +146,7 @@ a{text-decoration:none;color:inherit;}
 @media(max-width:700px){.config-grid{grid-template-columns:1fr 1fr;}.cost-item-row{grid-template-columns:1fr 90px auto;}}
 .pct-total{display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;border-radius:7px;margin-top:.5rem;font-size:.85rem;}
 .pct-total.ok{background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.3);color:#81c784;}
-.pct-total.warn{background:rgba(224,178,62,.1);border:1px solid rgba(224,178,62,.3);color:var(--accent);}
+.pct-total.warn{background:rgba(255,45,149,.1);border:1px solid rgba(255,45,149,.3);color:var(--accent);}
 .pct-total.over{background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);color:var(--danger);}
 .markup-hero{text-align:center;background:var(--surface2);border-radius:10px;padding:1.25rem;margin-bottom:1rem;}
 .markup-hero .mk-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
@@ -783,7 +783,7 @@ async function loadDashboard(){
   if(chartDaily) chartDaily.destroy();
   chartDaily = new Chart($('chart-daily'),{
     type:'line',
-    data:{labels:days,datasets:[{label:'Receita',data:revs,borderColor:'#e0b23e',backgroundColor:'rgba(224,178,62,.1)',fill:true,tension:.4}]},
+    data:{labels:days,datasets:[{label:'Receita',data:revs,borderColor:'#ff2d95',backgroundColor:'rgba(255,45,149,.1)',fill:true,tension:.4}]},
     options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'R$ '+v.toLocaleString('pt-BR')},grid:{color:'#2d3147'}},x:{grid:{color:'#2d3147'}}}}
   });
 
@@ -793,13 +793,13 @@ async function loadDashboard(){
   chartTop = new Chart($('chart-top'),{
     type:'bar',
     data:{labels:tp.map(r=>r.product_name.split(' ').slice(0,2).join(' ')),
-          datasets:[{label:'Qtd',data:tp.map(r=>Number(r.total_qty)),backgroundColor:'#b87333'}]},
+          datasets:[{label:'Qtd',data:tp.map(r=>Number(r.total_qty)),backgroundColor:'#c7187a'}]},
     options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#2d3147'}},x:{grid:{color:'#2d3147'}}}}
   });
 
   // Gráfico status
   if(chartStatus) chartStatus.destroy();
-  const statusColors={pendente:'#e0b23e',confirmado:'#4caf50',em_preparo:'#64b5f6',em_entrega:'#ce93d8',entregue:'#aed581',cancelado:'#e05555'};
+  const statusColors={pendente:'#ff2d95',confirmado:'#4caf50',em_preparo:'#64b5f6',em_entrega:'#ce93d8',entregue:'#aed581',cancelado:'#e05555'};
   chartStatus = new Chart($('chart-status'),{
     type:'doughnut',
     data:{labels:d.by_status.map(r=>r.status),datasets:[{data:d.by_status.map(r=>Number(r.qty)),backgroundColor:d.by_status.map(r=>statusColors[r.status]||'#888')}]},
@@ -909,7 +909,7 @@ function renderProducts(){
 
   $('products-tbody').innerHTML = filtered.map(p=>{
     const margin = calcMargin(p);
-    const marginColor = margin>=40?'#4caf50':margin>=20?'#e0b23e':'#e05555';
+    const marginColor = margin>=40?'#4caf50':margin>=20?'#ff2d95':'#e05555';
     return `
     <tr>
       <td>${p.id}</td>

@@ -14,7 +14,7 @@ let DRINKS = [];
 let DEALS  = [];   // produtos com promocao=1
 
 // Marcas dinâmicas (extraídas dos produtos depois de carregar)
-let BRANDS = [{ id:'todos', label:'Todos', logo:'https://via.placeholder.com/60/222/e0b23e?text=★' }];
+let BRANDS = [{ id:'todos', label:'Todos', logo:'https://via.placeholder.com/60/222/ff2d95?text=★' }];
 
 let activeBrand   = 'todos';
 let activeScreen  = 'home';
@@ -111,7 +111,7 @@ async function loadCatalog() {
   BRANDS = [{
     id:    'todos',
     label: 'Todos',
-    logo:  'https://via.placeholder.com/60/222/e0b23e?text=★',
+    logo:  'https://via.placeholder.com/60/222/ff2d95?text=★',
   }];
   DRINKS.forEach(function(d) {
     if (!seen.has(d.brand)) {
@@ -1347,7 +1347,7 @@ async function loadOrders() {
   if (loading) loading.style.display='none';
   if (!res.ok||!res.data||res.data.length===0) { if(empty) empty.style.display='flex'; return; }
   const SL={'pendente':'Pendente','confirmado':'Confirmado','em_preparo':'Em preparo','em_entrega':'Em entrega','entregue':'Entregue','cancelado':'Cancelado'};
-  const SC={'pendente':'#e0b23e','confirmado':'#4caf50','em_preparo':'#2196f3','em_entrega':'#9c27b0','entregue':'#8bc34a','cancelado':'#e05555'};
+  const SC={'pendente':'#ff2d95','confirmado':'#4caf50','em_preparo':'#2196f3','em_entrega':'#9c27b0','entregue':'#8bc34a','cancelado':'#e05555'};
   list.innerHTML=res.data.map(o=>`
     <div class="order-card">
       <div class="order-card__head">
