@@ -59,7 +59,7 @@ function v($path) {
                   <article class="product-card" data-product-id="1">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=X-Burger"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='320'%3E%3Crect width='200' height='320' fill='%232a2a2a'/%3E%3Ctext x='100' y='160' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='22'%3EX-Burger%3C/text%3E%3C/svg%3E"
                         alt="X-Burger"
                         loading="lazy"
                         width="200"
@@ -80,7 +80,7 @@ function v($path) {
                   <article class="product-card" data-product-id="2">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Combo+Rock"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='320'%3E%3Crect width='200' height='320' fill='%232a2a2a'/%3E%3Ctext x='100' y='160' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='22'%3ECombo%20Rock%3C/text%3E%3C/svg%3E"
                         alt="Combo Rock Burger"
                         loading="lazy"
                         width="200"
@@ -101,7 +101,7 @@ function v($path) {
                   <article class="product-card" data-product-id="3">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Batata+Frita"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='320'%3E%3Crect width='200' height='320' fill='%232a2a2a'/%3E%3Ctext x='100' y='160' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='22'%3EBatata%20Frita%3C/text%3E%3C/svg%3E"
                         alt="Batata Frita"
                         loading="lazy"
                         width="200"
@@ -122,7 +122,7 @@ function v($path) {
                   <article class="product-card" data-product-id="4">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Onion+Rings"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='320'%3E%3Crect width='200' height='320' fill='%232a2a2a'/%3E%3Ctext x='100' y='160' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='22'%3EOnion%20Rings%3C/text%3E%3C/svg%3E"
                         alt="Onion Rings"
                         loading="lazy"
                         width="200"
@@ -143,7 +143,7 @@ function v($path) {
                   <article class="product-card" data-product-id="5">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Milkshake"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='320'%3E%3Crect width='200' height='320' fill='%232a2a2a'/%3E%3Ctext x='100' y='160' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='22'%3EMilkshake%3C/text%3E%3C/svg%3E"
                         alt="Milkshake"
                         loading="lazy"
                         width="200"
@@ -164,7 +164,7 @@ function v($path) {
                   <article class="product-card" data-product-id="6">
                     <div class="product-card__image">
                       <img
-                        src="https://via.placeholder.com/200x320/2a2a2a/ffffff?text=Coca-Cola"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='320'%3E%3Crect width='200' height='320' fill='%232a2a2a'/%3E%3Ctext x='100' y='160' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='22'%3ECoca-Cola%3C/text%3E%3C/svg%3E"
                         alt="Coca-Cola"
                         loading="lazy"
                         width="200"

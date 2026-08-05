@@ -14,7 +14,7 @@ let DRINKS = [];
 let DEALS  = [];   // produtos com promocao=1
 
 // Marcas dinâmicas (extraídas dos produtos depois de carregar)
-let BRANDS = [{ id:'todos', label:'Todos', logo:'https://via.placeholder.com/60/222/ff2d95?text=★' }];
+let BRANDS = [{ id:'todos', label:'Todos', logo: placeholderImg('★', 60, 60, '222222', 'ff2d95') }];
 
 let activeBrand   = 'todos';
 let activeScreen  = 'home';
@@ -112,7 +112,7 @@ async function loadCatalog() {
   BRANDS = [{
     id:    'todos',
     label: 'Todos',
-    logo:  'https://via.placeholder.com/60/222/ff2d95?text=★',
+    logo:  placeholderImg('★', 60, 60, '222222', 'ff2d95'),
   }];
   DRINKS.forEach(function(d) {
     if (!seen.has(d.brand)) {
@@ -121,7 +121,7 @@ async function loadCatalog() {
       BRANDS.push({
         id:    d.brand,
         label: d.brandLabel,
-        logo:  'https://via.placeholder.com/60/1a1a1a/fff?text=' + encodeURIComponent(initials),
+        logo:  placeholderImg(initials, 60, 60, '1a1a1a', 'ffffff'),
       });
     }
   });
@@ -180,6 +180,23 @@ function showToast(msg, type = 'info') {
    ═══════════════════════════════════════════════════════════ */
 const toStars = n => '★'.repeat(Math.max(0,n)) + '☆'.repeat(Math.max(0,5-n));
 const toBRL   = v => Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+
+// Placeholder de imagem gerado localmente (SVG inline) — sem depender de
+// serviços externos como via.placeholder.com (que saiu do ar).
+function placeholderImg(text, w, h, bg, fg) {
+  bg = bg || '1a1a1a'; fg = fg || 'ffffff';
+  const fontSize = Math.max(10, Math.round(Math.min(w, h) * 0.11));
+  const label = encodeURIComponent(String(text == null ? '' : text).slice(0, 18));
+  const cx = Math.round(w / 2), cy = Math.round(h / 2);
+  let svg = "<svg xmlns='http://www.w3.org/2000/svg' width='" + w + "' height='" + h + "'>" +
+            "<rect width='" + w + "' height='" + h + "' fill='#" + bg + "'/>" +
+            "<text x='" + cx + "' y='" + cy + "' dominant-baseline='middle' text-anchor='middle' fill='#" + fg + "' font-family='sans-serif' font-size='" + fontSize + "'>" + label + "</text></svg>";
+  // Codifica aspas simples também: essa string às vezes é embutida dentro de
+  // atributos HTML que já usam aspas simples (onerror="this.src='...'"),
+  // então não podemos deixar aspas simples literais no meio do data URI.
+  svg = svg.replace(/</g, '%3C').replace(/>/g, '%3E').replace(/#/g, '%23').replace(/'/g, '%27');
+  return 'data:image/svg+xml,' + svg;
+}
 
 /* ═══════════════════════════════════════════════════════════
    NAVEGAÇÃO
@@ -298,7 +315,7 @@ function gridCardHTML(d, i, opts = {}) {
         </button>
         ${removeFav ? `<button class="grid-card__fav-remove" data-key="${d.key}" aria-label="Remover dos favoritos">★</button>` : ''}
         <img src="${d.img}" alt="${d.name}" loading="lazy" width="200" height="280"
-             onerror="this.src='https://via.placeholder.com/200x280/111/fff?text=${encodeURIComponent(d.name.slice(0,10))}'"/>
+             onerror="this.src='${placeholderImg(d.name, 200, 280, '111111', 'ffffff')}'"/>
       </div>
       <div class="grid-card__body">
         <p class="grid-card__brand-tag">${d.brandLabel}</p>
@@ -547,7 +564,7 @@ function renderCartItem(obj) {
   return `
     <div class="cart-item" data-key="${d.key}">
       <img class="cart-item__img" src="${d.img}" alt="${d.name}" width="60" height="80"
-           onerror="this.src='https://via.placeholder.com/60x80/111/fff?text=img'"/>
+           onerror="this.src='${placeholderImg('img', 60, 80, '111111', 'ffffff')}'"/>
       <div class="cart-item__info">
         <p class="cart-item__name">${d.name}</p>
         <p class="cart-item__price">${toBRL(price * qty)}</p>
