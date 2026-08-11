@@ -79,7 +79,9 @@ function normalizeProduct(row) {
     brand:      brandId,
     brandLabel: row.marca || 'Outros',
     name:       row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
+    baseName:   row.nome,
     description: row.descricao || '',
+    ingredients: (row.ingredientes || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean),
     price:      Number(row.preco),
     salePrice:  onSale ? Number(row.valor_promocional) : null,
     onSale:     onSale,
@@ -302,11 +304,13 @@ function gridCardHTML(d, i, opts = {}) {
   const discount   = forceDiscount ?? (d.onSale && d.salePrice
     ? Math.round((1 - d.salePrice / d.price) * 100) : 0);
   const finalPrice = discount ? d.price * (1 - discount / 100) : (d.salePrice ?? d.price);
+  const hasDetail  = d.category === 'LANCHES' || d.category === 'COMBOS';
+  const detailAttr = hasDetail ? ` onclick="openProductDetail('${d.key}')"` : '';
 
   return `
     <article class="grid-card" data-brand="${d.brand}" data-key="${d.key}"
              style="animation-delay:${i*0.04}s">
-      <div class="grid-card__image-wrap">
+      <div class="grid-card__image-wrap"${hasDetail ? ' style="cursor:pointer"' : ''}${detailAttr}>
         ${d.badge && !discount ? `<span class="grid-card__badge">${d.badge}</span>` : ''}
         ${discount            ? `<span class="grid-card__discount-badge">-${discount}%</span>` : ''}
         <button class="grid-card__fav-btn ${isFav?'active':''}" data-key="${d.key}"
@@ -319,7 +323,7 @@ function gridCardHTML(d, i, opts = {}) {
              onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
       </div>
       <div class="grid-card__body">
-        <h3 class="grid-card__name">${d.name}</h3>
+        <h3 class="grid-card__name"${hasDetail ? ' style="cursor:pointer"' : ''}${detailAttr}>${d.name}</h3>
         ${d.description ? `<p class="grid-card__desc">${d.description}</p>` : ''}
         <div class="grid-card__rating" aria-label="Avaliação: ${d.stars} estrelas">${toStars(d.stars)}</div>
         <div class="grid-card__footer">
@@ -368,6 +372,148 @@ function bindGridEvents(container) {
       await toggleFavorite(this.dataset.key);
       renderFavorites();
     });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TELA DE DETALHE / PERSONALIZAR PRODUTO
+   ═══════════════════════════════════════════════════════════ */
+let pdState = null; // { key, qty, removed: Set<string> }
+
+function ensurePDOverlay() {
+  if (document.getElementById('pd-overlay')) return;
+  const div = document.createElement('div');
+  div.className = 'pd-overlay';
+  div.id = 'pd-overlay';
+  div.addEventListener('click', function(e) {
+    if (e.target === div) closeProductDetail();
+  });
+  document.body.appendChild(div);
+}
+
+function openProductDetail(key) {
+  const d = getDrinkByKey(key);
+  if (!d) return;
+  pdState = { key: key, qty: 1, removed: new Set() };
+  renderProductDetail();
+  document.getElementById('pd-overlay')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProductDetail() {
+  document.getElementById('pd-overlay')?.classList.remove('open');
+  document.body.style.overflow = '';
+  pdState = null;
+}
+
+function renderProductDetail() {
+  const root = document.getElementById('pd-overlay');
+  if (!root || !pdState) return;
+  const d = getDrinkByKey(pdState.key);
+  if (!d) return;
+
+  const discount   = d.onSale && d.salePrice ? Math.round((1 - d.salePrice / d.price) * 100) : 0;
+  const finalPrice = discount ? d.price * (1 - discount / 100) : (d.salePrice ?? d.price);
+  const isFav      = favorites.has(d.key);
+  const total      = finalPrice * pdState.qty;
+  const hasIngredients = d.ingredients && d.ingredients.length > 0;
+
+  root.innerHTML = `
+    <div class="pd-sheet">
+      <div class="pd-hero">
+        <button class="pd-icon-btn pd-back" id="pd-back" aria-label="Voltar">‹</button>
+        <button class="pd-icon-btn pd-fav ${isFav?'active':''}" id="pd-fav" aria-label="${isFav?'Remover dos':'Adicionar aos'} favoritos">
+          ${isFav ? '★' : '☆'}
+        </button>
+        <img src="${d.img}" alt="${d.name}"
+             onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
+      </div>
+      <div class="pd-body">
+        <div class="pd-panel">
+          ${d.badge && !discount ? `<span class="pd-badge">${d.badge}</span>` : ''}
+          ${discount ? `<span class="pd-badge pd-badge--sale">-${discount}%</span>` : ''}
+          <div class="pd-title-row">
+            <h2 class="pd-name">${d.name}</h2>
+          </div>
+          <div class="pd-sub-row">
+            <div class="pd-rating" aria-label="Avaliação: ${d.stars} estrelas">${toStars(d.stars)}</div>
+            <div class="pd-price-block">
+              ${discount||d.onSale ? `<span class="pd-original-price">${toBRL(d.price)}</span>` : ''}
+              <span class="pd-price">${toBRL(finalPrice)}</span>
+            </div>
+          </div>
+          ${d.description ? `<p class="pd-desc">${d.description}</p>` : ''}
+
+          ${hasIngredients ? `
+          <div class="pd-customize">
+            <h3 class="pd-customize__title">Personalizar</h3>
+            <p class="pd-customize__hint">Desmarque o que não quiser no seu pedido.</p>
+            <div class="pd-ingredient-list">
+              ${d.ingredients.map(function(ing) {
+                const checked = !pdState.removed.has(ing);
+                return `
+                  <label class="pd-ingredient">
+                    <span>${ing}</span>
+                    <span class="pd-toggle">
+                      <input type="checkbox" class="pd-ing-checkbox" data-ing="${ing}" ${checked?'checked':''}>
+                      <span class="pd-toggle__track"><span class="pd-toggle__thumb"></span></span>
+                    </span>
+                  </label>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+        </div>
+      </div>
+      <div class="pd-footer">
+        <div class="pd-qty">
+          <button class="pd-qty__btn" id="pd-qty-dec" aria-label="Diminuir">−</button>
+          <span id="pd-qty-val">${pdState.qty}</span>
+          <button class="pd-qty__btn" id="pd-qty-inc" aria-label="Aumentar">+</button>
+        </div>
+        <button class="pd-add-btn" id="pd-add-btn">Adicionar · ${toBRL(total)}</button>
+      </div>
+    </div>
+  `;
+
+  bindProductDetailEvents();
+}
+
+function bindProductDetailEvents() {
+  const root = document.getElementById('pd-overlay');
+  if (!root) return;
+
+  root.querySelector('#pd-back')?.addEventListener('click', closeProductDetail);
+
+  root.querySelector('#pd-fav')?.addEventListener('click', async function() {
+    if (!pdState) return;
+    await toggleFavorite(pdState.key);
+    renderProductDetail();
+  });
+
+  root.querySelectorAll('.pd-ing-checkbox').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+      if (!pdState) return;
+      const ing = this.dataset.ing;
+      if (this.checked) pdState.removed.delete(ing);
+      else pdState.removed.add(ing);
+    });
+  });
+
+  root.querySelector('#pd-qty-dec')?.addEventListener('click', function() {
+    if (!pdState || pdState.qty <= 1) return;
+    pdState.qty--;
+    renderProductDetail();
+  });
+  root.querySelector('#pd-qty-inc')?.addEventListener('click', function() {
+    if (!pdState) return;
+    pdState.qty++;
+    renderProductDetail();
+  });
+
+  root.querySelector('#pd-add-btn')?.addEventListener('click', function() {
+    if (!pdState) return;
+    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed));
+    closeProductDetail();
   });
 }
 
@@ -440,11 +586,14 @@ function getDrinkByKey(key) {
   return DRINKS.find(d => d.key === key) || DEALS.find(d => d.key === key) || null;
 }
 
-function addToCart(key) {
+function addToCart(key, qty, removed) {
+  qty = qty || 1;
+  removed = removed || [];
   const drink = getDrinkByKey(key);
   if (!drink) return;
-  if (cart[key]) cart[key].qty++;
-  else cart[key] = { drink, qty:1 };
+  const cartKey = removed.length ? key + '::' + removed.slice().sort().join('|') : key;
+  if (cart[cartKey]) cart[cartKey].qty += qty;
+  else cart[cartKey] = { drink, qty:qty, removed: removed.slice() };
   updateCartBadge();
   showToast(drink.name + ' adicionado ao carrinho! 🛒', 'success');
   document.querySelectorAll('.grid-card__btn[data-key="' + key + '"]').forEach(function(btn) {
@@ -454,6 +603,10 @@ function addToCart(key) {
     btn.style.color = 'var(--color-bg-primary)';
     setTimeout(function() { btn.textContent = orig; btn.style.background=''; btn.style.color=''; }, 800);
   });
+}
+
+function cartItemLabel(obj) {
+  return obj.drink.name + (obj.removed && obj.removed.length ? ' (sem ' + obj.removed.join(', ') + ')' : '');
 }
 
 function updateCartBadge() {
@@ -466,7 +619,9 @@ function updateCartBadge() {
 
 /* ── Cálculos ─────────────────────────────────────────────── */
 function cartTotals() {
-  const items    = Object.values(cart);
+  const items    = Object.keys(cart).map(function(k) {
+    return Object.assign({ cartKey: k }, cart[k]);
+  });
   const subtotal = items.reduce(function(s, obj) {
     return s + (obj.drink.salePrice || obj.drink.price) * obj.qty;
   }, 0);
@@ -561,21 +716,24 @@ function renderCartItem(obj) {
   const d   = obj.drink;
   const qty = obj.qty;
   const price = d.salePrice || d.price;
+  const removedNote = obj.removed && obj.removed.length
+    ? `<p class="cart-item__note">Sem: ${obj.removed.join(', ')}</p>` : '';
   return `
-    <div class="cart-item" data-key="${d.key}">
+    <div class="cart-item" data-key="${obj.cartKey}">
       <img class="cart-item__img" src="${d.img}" alt="${d.name}" width="60" height="80"
            onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
       <div class="cart-item__info">
         <p class="cart-item__name">${d.name}</p>
+        ${removedNote}
         <p class="cart-item__price">${toBRL(price * qty)}</p>
         <p class="cart-item__unit">Un.: ${toBRL(price)}</p>
       </div>
       <div class="cart-item__qty">
-        <button data-action="dec" data-key="${d.key}" aria-label="Diminuir">−</button>
+        <button data-action="dec" data-key="${obj.cartKey}" aria-label="Diminuir">−</button>
         <span>${qty}</span>
-        <button data-action="inc" data-key="${d.key}" aria-label="Aumentar">+</button>
+        <button data-action="inc" data-key="${obj.cartKey}" aria-label="Aumentar">+</button>
       </div>
-      <button class="cart-item__remove" data-action="remove" data-key="${d.key}" aria-label="Remover">✕</button>
+      <button class="cart-item__remove" data-action="remove" data-key="${obj.cartKey}" aria-label="Remover">✕</button>
     </div>`;
 }
 
@@ -785,7 +943,7 @@ async function checkout() {
 
   const payload = {
     items: items.map(function(obj) {
-      return { id:obj.drink.id, table_name:obj.drink.table, name:obj.drink.name,
+      return { id:obj.drink.id, table_name:obj.drink.table, name:cartItemLabel(obj),
                price:obj.drink.salePrice||obj.drink.price, qty:obj.qty };
     }),
     subtotal:       subtotal,
@@ -820,7 +978,7 @@ async function checkout() {
   // Gera mensagem WhatsApp
   const payLabel = PAYMENT_METHODS.find(function(m){ return m.id===checkoutState.paymentMethod; });
   const itemsText = items.map(function(obj) {
-    return obj.qty + 'x ' + obj.drink.name + ' – ' + toBRL((obj.drink.salePrice||obj.drink.price)*obj.qty);
+    return obj.qty + 'x ' + cartItemLabel(obj) + ' – ' + toBRL((obj.drink.salePrice||obj.drink.price)*obj.qty);
   }).join('%0A');
 
   let msg = '*Novo Pedido Rock Burger %23' + orderId + '*%0A%0A';
@@ -1399,6 +1557,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   Auth.load();
   initSwiper();
   initBottomBar();
+  ensurePDOverlay();
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeProductDetail();
+  });
   await loadCatalog();       // carrega produtos do banco → renderBrands + renderGrid
   initDealTimer();
   if (Auth.isLoggedIn()) syncFavoritesFromServer();
