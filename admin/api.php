@@ -118,7 +118,7 @@ if($method==='PUT' && preg_match('#^/products/([A-Z_]+)/(\d+)$#',$path,$pm)){
     if(!in_array($table,$allowed)) json_err('Tabela inválida.');
     $b=body();
     $fields=[];$vals=[];
-    $editable=['nome','ml','preco','promocao','valor_promocional','marca','retornavel','img','rate','preco_de_compra','estoque'];
+    $editable=['nome','descricao','ml','preco','promocao','valor_promocional','marca','retornavel','img','rate','preco_de_compra','estoque'];
     foreach($editable as $f){
         if(array_key_exists($f,$b)){
             $fields[]="`$f`=?";
@@ -139,10 +139,10 @@ if($method==='POST' && preg_match('#^/products/([A-Z_]+)$#',$path,$pm)){
     if(!in_array($table,$allowed)) json_err('Tabela inválida.');
     $b=body();
     db()->prepare(
-        "INSERT INTO `$table` (nome,ml,preco,promocao,valor_promocional,marca,retornavel,img,rate,preco_de_compra,estoque)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+        "INSERT INTO `$table` (nome,descricao,ml,preco,promocao,valor_promocional,marca,retornavel,img,rate,preco_de_compra,estoque)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
     )->execute([
-        $b['nome']??'', (int)($b['ml']??0),
+        $b['nome']??'', $b['descricao']??'', (int)($b['ml']??0),
         (float)($b['preco']??0), (int)($b['promocao']??0),
         (float)($b['valor_promocional']??0), $b['marca']??'',
         (int)($b['retornavel']??0), $b['img']??'',

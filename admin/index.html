@@ -582,6 +582,7 @@ a{text-decoration:none;color:inherit;}
         <select id="mp-ret"><option value="0">Não</option><option value="1">Sim</option></select>
       </div>
     </div>
+    <div class="field"><label>Descrição</label><textarea id="mp-desc" rows="2" maxlength="300" placeholder="Ex: Pão, hambúrguer bovino 120g, queijo, alface e tomate." style="width:100%;resize:vertical;font-family:inherit"></textarea></div>
     <div class="field"><label>Nome do arquivo de imagem</label><input id="mp-img" type="text" placeholder="heineken.jpg"/></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancelar</button>
@@ -968,6 +969,7 @@ window.openProductModal = function(table, id){
   $('mp-id').value    = p?.id||'';
   $('mp-cat').value   = p?.table_name||'LANCHES';
   $('mp-nome').value  = p?.nome||'';
+  $('mp-desc').value  = p?.descricao||'';
   $('mp-marca').value = p?.marca||'';
   $('mp-ml').value    = p?.ml||'';
   $('mp-rate').value  = p?.rate||'';
@@ -986,7 +988,7 @@ $('btn-save-product').addEventListener('click', async()=>{
   const table = $('mp-cat').value;
   const id    = $('mp-id').value;
   const body  = {
-    nome:$('mp-nome').value, marca:$('mp-marca').value,
+    nome:$('mp-nome').value, descricao:$('mp-desc').value, marca:$('mp-marca').value,
     ml:$('mp-ml').value, rate:$('mp-rate').value,
     preco_de_compra:$('mp-custo').value, preco:$('mp-preco').value,
     promocao:$('mp-promo').value, valor_promocional:$('mp-promo-val').value,

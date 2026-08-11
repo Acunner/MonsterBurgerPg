@@ -79,6 +79,7 @@ function normalizeProduct(row) {
     brand:      brandId,
     brandLabel: row.marca || 'Outros',
     name:       row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
+    description: row.descricao || '',
     price:      Number(row.preco),
     salePrice:  onSale ? Number(row.valor_promocional) : null,
     onSale:     onSale,
@@ -318,8 +319,8 @@ function gridCardHTML(d, i, opts = {}) {
              onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
       </div>
       <div class="grid-card__body">
-        <p class="grid-card__brand-tag">${d.brandLabel}</p>
         <h3 class="grid-card__name">${d.name}</h3>
+        ${d.description ? `<p class="grid-card__desc">${d.description}</p>` : ''}
         <div class="grid-card__rating" aria-label="Avaliação: ${d.stars} estrelas">${toStars(d.stars)}</div>
         <div class="grid-card__footer">
           <div>
@@ -378,8 +379,7 @@ function applyFilters() {
   cards.forEach(card => {
     const brandMatch  = activeBrand === 'todos' || card.dataset.brand === activeBrand;
     const name        = card.querySelector('.grid-card__name')?.textContent.toLowerCase() ?? '';
-    const brandLabel  = card.querySelector('.grid-card__brand-tag')?.textContent.toLowerCase() ?? '';
-    const searchMatch = q.length === 0 || name.includes(q) || brandLabel.includes(q);
+    const searchMatch = q.length === 0 || name.includes(q);
     const show = brandMatch && searchMatch;
     if (show) {
       card.classList.remove('hidden','entering');

@@ -263,15 +263,19 @@ main {
   transition: transform var(--transition-normal);
 }
 .grid-card:hover .grid-card__image-wrap img { transform: scale(1.06); }
-/* Vinheta: a foto esmaece para a cor de fundo do card nas bordas,
-   até "sumir" perto do nome do produto — sem corte seco. */
+/* Vinheta: a parte de baixo da foto esmaece lenta e gradualmente
+   para a cor de fundo do card — sem corte seco. */
 .grid-card__image-wrap::after {
   content: "";
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 38%, transparent 32%, var(--color-bg-secondary) 88%);
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    transparent 38%,
+    rgba(51,51,51,0.35) 62%,
+    var(--color-bg-secondary) 100%);
   pointer-events: none;
 }
-.grid-card__body { margin-top: -22px; position: relative; z-index: 1; }
+.grid-card__body { margin-top: -30px; position: relative; z-index: 1; }
 .grid-card__badge {
   position: absolute; top: 8px; left: 8px;
   background: var(--color-accent); color: var(--color-bg-primary);
@@ -282,7 +286,14 @@ main {
   display: flex; flex-direction: column; flex: 1;
   padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm); gap: 4px;
 }
-.grid-card__name { font-family: "Crimson Text", serif; font-size: 0.9rem; font-weight: 600; line-height: 1.3; }
+.grid-card__name {
+  font-family: "Crimson Text", serif; font-size: 0.95rem; font-weight: 700; line-height: 1.3;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+.grid-card__desc {
+  font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 .grid-card__rating { font-size: 0.65rem; color: var(--color-accent); letter-spacing: 2px; }
 .grid-card__footer {
   display: flex; align-items: center; justify-content: space-between;
