@@ -53,7 +53,29 @@ ul { list-style: none; }
 /* ═══════════════════════════════════════════════════════════
    LAYOUT BASE
    ═══════════════════════════════════════════════════════════ */
-#app { position: relative; min-height: 100dvh; }
+#app { position: relative; min-height: 100dvh; isolation: isolate; }
+/* Glow ambiente ao fundo — mesma sensação "bokeh" da referência,
+   usando as cores já existentes do site (nada de cor nova). */
+#app::before, #app::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  opacity: 0.35;
+}
+#app::before {
+  width: 260px; height: 260px;
+  top: -60px; right: -60px;
+  background: var(--color-accent);
+}
+#app::after {
+  width: 220px; height: 220px;
+  bottom: 120px; left: -70px;
+  background: var(--color-bronze);
+  opacity: 0.28;
+}
 main {
   width: 100%;
   padding-bottom: calc(var(--btbar-height) + var(--spacing-md) + env(safe-area-inset-bottom, 0px));
@@ -66,9 +88,12 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--color-bg-secondary);
+  background: rgba(51, 51, 51, 0.55);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
   padding: var(--spacing-sm) var(--spacing-md);
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -81,11 +106,18 @@ main {
   text-shadow: 0 0 14px var(--color-accent-glow), 0 1px 2px rgba(0,0,0,0.5);
 }
 .topBar__hamburger {
-  background: transparent;
+  background: rgba(20,20,22,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--color-text-primary);
   font-size: var(--font-size-lg);
-  padding: 4px 8px;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: background var(--transition-fast);
 }
+.topBar__hamburger:hover { background: rgba(20,20,22,0.65); }
 @media (max-width: 768px) {
   .topBar { padding: 10px var(--spacing-sm); gap: 8px; }
   .topBar__logo { font-size: 1.3rem; }
@@ -203,7 +235,9 @@ main {
 .brand-chip:active { transform: scale(0.95); }
 .brand-chip__logo {
   width: 60px; height: 60px; border-radius: 50%;
-  background: var(--color-bg-secondary);
+  background: rgba(51,51,51,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 2px solid rgba(255,45,149,0.2);
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -240,7 +274,9 @@ main {
 }
 .grid-card {
   display: flex; flex-direction: column;
-  background: linear-gradient(160deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+  background: linear-gradient(160deg, rgba(51,51,51,0.88) 0%, rgba(42,42,42,0.92) 100%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255,45,149,0.15); border-radius: 8px; overflow: hidden;
   animation: fadeInCard 0.5s ease-out both;
   transition: transform var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
@@ -585,9 +621,9 @@ main {
   position: fixed;
   inset: 0;
   z-index: 500;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .pd-overlay.open { display: flex; align-items: flex-end; justify-content: center; }
 
@@ -620,15 +656,25 @@ main {
 .pd-hero img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
+/* Névoa suave na base da foto — mistura com o vidro do painel */
+.pd-hero::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom,
+    transparent 55%,
+    rgba(51,51,51,0.35) 80%,
+    rgba(51,51,51,0.7) 100%);
+  pointer-events: none;
+}
 .pd-icon-btn {
   position: absolute;
   top: var(--spacing-sm);
   width: 40px; height: 40px;
   border-radius: 50%;
-  border: none;
-  background: rgba(20,20,20,0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(20,20,20,0.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
   color: var(--color-text-primary);
   font-size: 1.3rem;
   display: flex; align-items: center; justify-content: center;
@@ -647,12 +693,13 @@ main {
   z-index: 1;
 }
 .pd-panel {
-  background: rgba(51,51,51,0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(51,51,51,0.55);
+  backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
   border-radius: 22px 22px 0 0;
   padding: var(--spacing-md) var(--spacing-sm) var(--spacing-lg);
-  border-top: 1px solid rgba(255,45,149,0.18);
+  border-top: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.35);
 }
 
 .pd-badge {

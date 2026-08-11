@@ -146,7 +146,7 @@
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 /* ─── BOTÃO FAVORITAR NO CARD ───────────────────────────── */
-.grid-card__fav-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.5); border: none; color: rgba(255,255,255,.5); font-size: 1.1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast); z-index: 2; }
+.grid-card__fav-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: none; color: rgba(255,255,255,.5); font-size: 1.1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast); z-index: 2; }
 .grid-card__fav-btn:hover  { background: rgba(0,0,0,.75); color: var(--color-accent); transform: scale(1.15); }
 .grid-card__fav-btn.active { color: var(--color-accent); background: rgba(0,0,0,.7); }
 
