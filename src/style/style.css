@@ -253,16 +253,25 @@ main {
   to   { opacity: 1; transform: translateY(0); }
 }
 .grid-card__image-wrap {
-  position: relative; width: 100%; aspect-ratio: 3/4;
-  display: flex; align-items: center; justify-content: center;
-  background: transparent; padding: var(--spacing-sm);
+  position: relative; width: 100%; aspect-ratio: 4/5;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
 }
 .grid-card__image-wrap img {
-  width: 100%; height: 100%; object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+  width: 100%; height: 100%; object-fit: cover; object-position: center;
+  display: block;
   transition: transform var(--transition-normal);
 }
-.grid-card:hover .grid-card__image-wrap img { transform: scale(1.05); }
+.grid-card:hover .grid-card__image-wrap img { transform: scale(1.06); }
+/* Vinheta: a foto esmaece para a cor de fundo do card nas bordas,
+   até "sumir" perto do nome do produto — sem corte seco. */
+.grid-card__image-wrap::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 38%, transparent 32%, var(--color-bg-secondary) 88%);
+  pointer-events: none;
+}
+.grid-card__body { margin-top: -22px; position: relative; z-index: 1; }
 .grid-card__badge {
   position: absolute; top: 8px; left: 8px;
   background: var(--color-accent); color: var(--color-bg-primary);
