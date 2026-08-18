@@ -13,10 +13,17 @@ const API_BASE = '/api';   // ajuste se necessário
 let DRINKS = [];
 let DEALS  = [];   // produtos com promocao=1
 
-// Marcas dinâmicas (extraídas dos produtos depois de carregar)
-let BRANDS = [{ id:'todos', label:'Todos', logo: placeholderImg('★', 60, 60, '222222', 'ff2d95') }];
+// Categorias do cardápio (fixas — não dependem dos produtos carregados)
+const CATEGORIES = [
+  { id:'todos',            label:'Todos',   icon:'apps-outline' },
+  { id:'LANCHES',          label:'Lanches', icon:'fast-food-outline' },
+  { id:'COMBOS',           label:'Combos',  icon:'layers-outline' },
+  { id:'ACOMPANHAMENTOS',  label:'Acomp.',  icon:'restaurant-outline' },
+  { id:'BEBIDAS',          label:'Bebidas', icon:'cafe-outline' },
+  { id:'INGREDIENTES',     label:'Extras',  icon:'add-circle-outline' },
+];
 
-let activeBrand   = 'todos';
+let activeCategory = 'todos';
 let activeScreen  = 'home';
 let _searchQuery  = '';
 
@@ -110,26 +117,7 @@ async function loadCatalog() {
   DRINKS = catRes.data.map(normalizeProduct);
   DEALS  = dealRes.ok ? dealRes.data.map(normalizeProduct) : [];
 
-  // Reconstroi BRANDS pelas marcas presentes
-  const seen = new Set();
-  BRANDS = [{
-    id:    'todos',
-    label: 'Todos',
-    logo:  placeholderImg('★', 60, 60, '222222', 'ff2d95'),
-  }];
-  DRINKS.forEach(function(d) {
-    if (!seen.has(d.brand)) {
-      seen.add(d.brand);
-      var initials = d.brandLabel.slice(0, 4);
-      BRANDS.push({
-        id:    d.brand,
-        label: d.brandLabel,
-        logo:  placeholderImg(initials, 60, 60, '1a1a1a', 'ffffff'),
-      });
-    }
-  });
-
-  renderBrands();
+  renderCategories();
   renderGrid();
 }
 
@@ -270,25 +258,52 @@ function initSwiper() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   FILTRO DE MARCAS
+   TOPO — AVATAR + SAUDAÇÃO DA HOME
    ═══════════════════════════════════════════════════════════ */
-function renderBrands() {
+function renderTopbarAvatar() {
+  const btn = document.getElementById('topbar-avatar');
+  if (!btn) return;
+  if (Auth.isLoggedIn() && currentUser) {
+    const initial = (currentUser.name ?? 'U')[0].toUpperCase();
+    btn.innerHTML = currentUser.avatar
+      ? `<img src="${currentUser.avatar}" alt="Avatar"/>`
+      : `<span class="topBar__avatar-initial">${initial}</span>`;
+  } else {
+    btn.innerHTML = `<ion-icon name="person-outline"></ion-icon>`;
+  }
+}
+
+function renderHomeGreeting() {
+  const el = document.getElementById('home-greeting');
+  if (!el) return;
+  const firstName = (Auth.isLoggedIn() && currentUser && currentUser.name)
+    ? currentUser.name.split(' ')[0] : null;
+  el.innerHTML = `
+    <p class="home-greeting__hi">${firstName ? 'Olá, ' + firstName : 'Bem-vindo'} 👋</p>
+    <h1 class="home-greeting__title">Boa fome,<br/><span>bom humor!</span></h1>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FILTRO DE CATEGORIAS
+   ═══════════════════════════════════════════════════════════ */
+function renderCategories() {
   const track = document.getElementById('brand-track');
   if (!track) return;
-  track.innerHTML = BRANDS.map(b => `
-    <button class="brand-chip ${b.id===activeBrand?'active':''}"
-            data-brand="${b.id}" aria-pressed="${b.id===activeBrand}"
-            aria-label="Filtrar por ${b.label}">
+  track.innerHTML = CATEGORIES.map(c => `
+    <button class="brand-chip ${c.id===activeCategory?'active':''}"
+            data-category="${c.id}" aria-pressed="${c.id===activeCategory}"
+            aria-label="Filtrar por ${c.label}">
       <span class="brand-chip__logo">
-        <img src="${b.logo}" alt="${b.label}" width="60" height="60" loading="lazy"/>
+        <ion-icon name="${c.icon}"></ion-icon>
       </span>
-      <span class="brand-chip__label">${b.label}</span>
+      <span class="brand-chip__label">${c.label}</span>
     </button>
   `).join('');
   track.querySelectorAll('.brand-chip').forEach(chip => {
     chip.addEventListener('click', function() {
-      activeBrand = this.dataset.brand;
-      renderBrands();
+      activeCategory = this.dataset.category;
+      renderCategories();
       applyFilters();
       document.querySelector('.products-grid')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
     });
@@ -308,7 +323,7 @@ function gridCardHTML(d, i, opts = {}) {
   const detailAttr = hasDetail ? ` onclick="openProductDetail('${d.key}')"` : '';
 
   return `
-    <article class="grid-card" data-brand="${d.brand}" data-key="${d.key}"
+    <article class="grid-card" data-brand="${d.brand}" data-category="${d.category}" data-key="${d.key}"
              style="animation-delay:${i*0.04}s">
       <div class="grid-card__image-wrap"${hasDetail ? ' style="cursor:pointer"' : ''}${detailAttr}>
         ${d.badge && !discount ? `<span class="grid-card__badge">${d.badge}</span>` : ''}
@@ -523,10 +538,10 @@ function applyFilters() {
   const cards = document.querySelectorAll('#products-grid .grid-card');
   let visible = 0;
   cards.forEach(card => {
-    const brandMatch  = activeBrand === 'todos' || card.dataset.brand === activeBrand;
+    const categoryMatch = activeCategory === 'todos' || card.dataset.category === activeCategory;
     const name        = card.querySelector('.grid-card__name')?.textContent.toLowerCase() ?? '';
     const searchMatch = q.length === 0 || name.includes(q);
-    const show = brandMatch && searchMatch;
+    const show = categoryMatch && searchMatch;
     if (show) {
       card.classList.remove('hidden','entering');
       void card.offsetWidth;
@@ -549,10 +564,10 @@ function updateCount(n) {
     document.querySelector('.products-grid__title')?.insertAdjacentElement('afterend', el);
   }
   const total = n ?? DRINKS.length;
-  const brand = BRANDS.find(b => b.id === activeBrand);
-  el.textContent = activeBrand === 'todos'
+  const cat   = CATEGORIES.find(c => c.id === activeCategory);
+  el.textContent = activeCategory === 'todos'
     ? `${total} produto${total!==1?'s':''}`
-    : `${total} produto${total!==1?'s':''} em ${brand?.label}`;
+    : `${total} produto${total!==1?'s':''} em ${cat?.label}`;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1297,6 +1312,8 @@ function bindAuthFormEvents() {
       await syncFavoritesFromServer();
       showToast(`Bem-vindo, ${res.data.user.name}! 🍺`, 'success');
       renderProfile();
+      renderTopbarAvatar();
+      renderHomeGreeting();
     } else { errEl.textContent=res.error??'Erro ao fazer login.'; btn.textContent='Entrar'; btn.disabled=false; }
   });
   // Cadastro submit
@@ -1314,6 +1331,8 @@ function bindAuthFormEvents() {
       Auth.save(res.data.token, res.data.user);
       showToast(`Conta criada! Bem-vindo(a), ${res.data.user.name} 🎉`,'success');
       renderProfile();
+      renderTopbarAvatar();
+      renderHomeGreeting();
     } else { errEl.textContent=res.error??'Erro ao cadastrar.'; btn.textContent='Criar Conta'; btn.disabled=false; }
   });
   // Visitante
@@ -1433,6 +1452,8 @@ function bindProfileEvents() {
     Auth.clear(); favorites.clear();
     showToast('Você saiu da conta.','info');
     renderProfile();
+    renderTopbarAvatar();
+    renderHomeGreeting();
   });
   // Salvar conta
   document.getElementById('btn-save-account')?.addEventListener('click', async () => {
@@ -1448,6 +1469,8 @@ function bindProfileEvents() {
       localStorage.setItem('taberna_user',JSON.stringify(currentUser));
       document.getElementById('ph-name').textContent=name;
       showToast('Perfil atualizado! ✔','success');
+      renderTopbarAvatar();
+      renderHomeGreeting();
     } else errEl.textContent=res.error??'Erro ao salvar.';
   });
   // Novo endereço
@@ -1558,10 +1581,15 @@ document.addEventListener('DOMContentLoaded', async function() {
   initSwiper();
   initBottomBar();
   ensurePDOverlay();
+  renderTopbarAvatar();
+  renderHomeGreeting();
+  document.getElementById('topbar-avatar')?.addEventListener('click', function() {
+    document.querySelector('.botonBar .list[data-target="perfil"]')?.click();
+  });
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeProductDetail();
   });
-  await loadCatalog();       // carrega produtos do banco → renderBrands + renderGrid
+  await loadCatalog();       // carrega produtos do banco → renderCategories + renderGrid
   initDealTimer();
   if (Auth.isLoggedIn()) syncFavoritesFromServer();
 });

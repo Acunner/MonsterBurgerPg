@@ -44,14 +44,17 @@ function v($path) {
     <div id="app">
       <!-- ══════════════════ HEADER ══════════════════ -->
       <header class="topBar">
-        <div class="topBar__logo">Rock Burger</div>
         <button class="topBar__hamburger" aria-label="Menu">☰</button>
+        <div class="topBar__logo">Rock Burger</div>
+        <button class="topBar__avatar" id="topbar-avatar" aria-label="Ver perfil"></button>
       </header>
 
       <!-- ══════════════════ TELAS ══════════════════ -->
       <main id="screens">
         <!-- ▸ HOME -->
         <section class="screen active" data-screen="home" aria-label="Home">
+          <div class="home-greeting" id="home-greeting"></div>
+
           <section class="products-carousel" aria-label="Produtos em Destaque">
             <div class="swiper-container">
               <div class="swiper-wrapper">

@@ -118,10 +118,55 @@ main {
   transition: background var(--transition-fast);
 }
 .topBar__hamburger:hover { background: rgba(20,20,22,0.65); }
+
+.topBar__avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(20,20,22,0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,45,149,0.25);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.topBar__avatar:hover { border-color: var(--color-accent); box-shadow: 0 0 10px var(--color-accent-glow); }
+.topBar__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.topBar__avatar ion-icon { font-size: 1.2rem; color: rgba(255,255,255,0.7); }
+.topBar__avatar-initial {
+  font-family: "Playfair Display", serif;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SAUDAÇÃO DA HOME
+   ═══════════════════════════════════════════════════════════ */
+.home-greeting {
+  padding: var(--spacing-md) var(--spacing-md) 0;
+}
+.home-greeting__hi {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 4px;
+}
+.home-greeting__title {
+  font-family: "Playfair Display", serif;
+  font-size: 1.6rem;
+  line-height: 1.18;
+  color: var(--color-text-primary);
+}
+.home-greeting__title span {
+  color: var(--color-accent);
+  text-shadow: 0 0 16px var(--color-accent-glow);
+}
+@media (min-width: 768px) {
+  .home-greeting__title { font-size: 2rem; }
+}
 @media (max-width: 768px) {
   .topBar { padding: 10px var(--spacing-sm); gap: 8px; }
   .topBar__logo { font-size: 1.3rem; }
-  .topBar__hamburger { display: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -242,17 +287,22 @@ main {
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.brand-chip__logo img {
-  width: 100%; height: 100%; object-fit: contain; padding: 6px;
-  filter: grayscale(60%) brightness(0.9);
-  transition: filter var(--transition-fast);
+.brand-chip__logo ion-icon {
+  font-size: 26px;
+  color: rgba(255,255,255,0.65);
+  transition: color var(--transition-fast);
 }
 .brand-chip__label {
   font-size: 0.65rem; color: rgba(255,255,255,0.55);
   font-family: "Crimson Text", serif; letter-spacing: 0.5px;
   transition: color var(--transition-fast);
 }
-.brand-chip.active .brand-chip__logo { border-color: var(--color-accent); box-shadow: 0 0 12px rgba(255,45,149,0.45); }
+.brand-chip.active .brand-chip__logo {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 14px var(--color-accent-glow);
+}
+.brand-chip.active .brand-chip__logo ion-icon { color: var(--color-bg-primary); }
 .brand-chip.active .brand-chip__logo img { filter: grayscale(0%) brightness(1.1); }
 .brand-chip.active .brand-chip__label { color: var(--color-accent); font-weight: 600; }
 
