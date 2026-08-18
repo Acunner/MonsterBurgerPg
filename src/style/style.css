@@ -6,9 +6,9 @@
 :root {
   --color-accent: rgb(255, 45, 149);
   --color-accent-dark: #b3105f;
-  --color-bg-primary: #2a2a2a;
-  --color-bg-secondary: #333333;
-  --color-bg-tertiary: #535353;
+  --color-bg-primary: #1c1917;
+  --color-bg-secondary: #262220;
+  --color-bg-tertiary: #3d3733;
   --color-bronze: #c7187a;
   --color-accent-glow: rgba(255, 45, 149, 0.55);
   --color-text-primary: #ffffff;
@@ -88,7 +88,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(51, 51, 51, 0.55);
+  background: rgba(38, 34, 32, 0.55);
   backdrop-filter: blur(18px) saturate(1.5);
   -webkit-backdrop-filter: blur(18px) saturate(1.5);
   padding: var(--spacing-sm) var(--spacing-md);
@@ -106,7 +106,7 @@ main {
   text-shadow: 0 0 14px var(--color-accent-glow), 0 1px 2px rgba(0,0,0,0.5);
 }
 .topBar__hamburger {
-  background: rgba(20,20,22,0.4);
+  background: rgba(18,15,14,0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--color-text-primary);
@@ -117,12 +117,12 @@ main {
   padding: 0;
   transition: background var(--transition-fast);
 }
-.topBar__hamburger:hover { background: rgba(20,20,22,0.65); }
+.topBar__hamburger:hover { background: rgba(18,15,14,0.65); }
 
 .topBar__avatar {
   width: 38px; height: 38px;
   border-radius: 50%;
-  background: rgba(20,20,22,0.4);
+  background: rgba(18,15,14,0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255,45,149,0.25);
@@ -280,7 +280,7 @@ main {
 .brand-chip:active { transform: scale(0.95); }
 .brand-chip__logo {
   width: 60px; height: 60px; border-radius: 50%;
-  background: rgba(51,51,51,0.55);
+  background: rgba(38,34,32,0.55);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 2px solid rgba(255,45,149,0.2);
@@ -324,7 +324,7 @@ main {
 }
 .grid-card {
   display: flex; flex-direction: column;
-  background: linear-gradient(160deg, rgba(51,51,51,0.88) 0%, rgba(42,42,42,0.92) 100%);
+  background: linear-gradient(160deg, rgba(38,34,32,0.88) 0%, rgba(28,25,23,0.92) 100%);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255,45,149,0.15); border-radius: 8px; overflow: hidden;
@@ -357,7 +357,7 @@ main {
   background: linear-gradient(to bottom,
     transparent 0%,
     transparent 38%,
-    rgba(51,51,51,0.35) 62%,
+    rgba(38,34,32,0.35) 62%,
     var(--color-bg-secondary) 100%);
   pointer-events: none;
 }
@@ -404,7 +404,7 @@ main {
   position: fixed; left: 0; bottom: 0; width: 100%;
   z-index: 200;
   /* Fundo semitransparente — o blur cuida do resto */
-  background: rgba(20, 20, 22, 0.55);
+  background: rgba(18, 15, 14, 0.55);
   backdrop-filter: blur(20px) saturate(1.6);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   /* Linha sutil no topo para separar da página */
@@ -712,8 +712,8 @@ main {
   position: absolute; inset: 0;
   background: linear-gradient(to bottom,
     transparent 55%,
-    rgba(51,51,51,0.35) 80%,
-    rgba(51,51,51,0.7) 100%);
+    rgba(38,34,32,0.35) 80%,
+    rgba(38,34,32,0.7) 100%);
   pointer-events: none;
 }
 .pd-icon-btn {
@@ -722,7 +722,7 @@ main {
   width: 40px; height: 40px;
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(20,20,20,0.4);
+  background: rgba(18,15,14,0.4);
   backdrop-filter: blur(12px) saturate(1.4);
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
   color: var(--color-text-primary);
@@ -743,7 +743,7 @@ main {
   z-index: 1;
 }
 .pd-panel {
-  background: rgba(51,51,51,0.55);
+  background: rgba(38,34,32,0.55);
   backdrop-filter: blur(22px) saturate(1.6);
   -webkit-backdrop-filter: blur(22px) saturate(1.6);
   border-radius: 22px 22px 0 0;
@@ -874,7 +874,7 @@ main {
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
-  background: rgba(42, 42, 42, 0.55);
+  background: rgba(28, 25, 23, 0.55);
   backdrop-filter: blur(20px) saturate(1.6);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   border-top: 1px solid rgba(255,255,255,0.1);
