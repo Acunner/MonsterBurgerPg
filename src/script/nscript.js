@@ -94,7 +94,7 @@ function normalizeProduct(row) {
     onSale:     onSale,
     dealExpiresAt: row.promocao_expira_em || null,
     stars:      Math.round(Number(row.rate || 4)),
-    badge:      Number(row.retornavel) ? 'Vegetariano' : null,
+    badge:      null, // tag "Vegetariano" removida do card/tela de produto
     img:        '/src/img/' + row.img,
   };
 }
