@@ -130,6 +130,7 @@ async function loadCatalog() {
 
   renderCategories();
   renderGrid();
+  renderCarousel();
 }
 
 function showGridSkeleton() {
@@ -245,8 +246,52 @@ function initBottomBar() {
 /* ═══════════════════════════════════════════════════════════
    CARROSSEL (Swiper) — usa os primeiros 6 produtos carregados
    ═══════════════════════════════════════════════════════════ */
+let _carouselSwiper = null;
+
+// Monta os slides do carrossel do topo com produtos reais do banco:
+// alguns combos + alguns acompanhamentos em destaque.
+function renderCarousel() {
+  const wrap = document.getElementById('carousel-wrapper');
+  if (!wrap) return;
+
+  const combos = DRINKS.filter(function(d) { return d.category === 'COMBOS'; }).slice(0, 3);
+  const sides  = DRINKS.filter(function(d) { return d.category === 'ACOMPANHAMENTOS'; }).slice(0, 3);
+  const slides = combos.concat(sides);
+
+  if (!slides.length) { wrap.innerHTML = ''; return; }
+
+  wrap.innerHTML = slides.map(function(d) {
+    const finalPrice = d.onSale && d.salePrice ? d.salePrice : d.price;
+    const hasDetail  = d.category === 'LANCHES' || d.category === 'COMBOS';
+    const openAttr   = hasDetail ? ` onclick="openProductDetail('${d.key}')" style="cursor:pointer"` : '';
+    return `
+      <div class="swiper-slide">
+        <article class="product-card" data-key="${d.key}">
+          <div class="product-card__image"${openAttr}>
+            <img src="${d.img}" alt="${d.name}" loading="lazy" width="200" height="320"
+                 onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
+          </div>
+          <div class="product-card__info">
+            <h2 class="product-card__name"${openAttr}>${d.name}</h2>
+            <div class="product-card__rating" aria-label="Avaliação: ${d.stars} estrelas">${toStars(d.stars)}</div>
+          </div>
+          <div class="product-card__footer">
+            <span class="product-card__price">${toBRL(finalPrice)}</span>
+            <button class="product-card__button" data-key="${d.key}">Comprar</button>
+          </div>
+        </article>
+      </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.product-card__button').forEach(function(btn) {
+    btn.addEventListener('click', function() { addToCart(this.dataset.key); });
+  });
+
+  if (_carouselSwiper) { _carouselSwiper.update(); _carouselSwiper.slideTo(0); }
+}
+
 function initSwiper() {
-  const swiper = new Swiper('.swiper-container', {
+  _carouselSwiper = new Swiper('.swiper-container', {
     loop:true, slidesPerView:2, spaceBetween:24, speed:400,
     navigation:{ nextEl:'.swiper-button-next', prevEl:'.swiper-button-prev' },
     pagination:{ el:'.swiper-pagination', clickable:true, dynamicBullets:true },
@@ -256,16 +301,7 @@ function initSwiper() {
     on:{ init() { this.slides.forEach(s => s.setAttribute('tabindex','0')); } },
   });
   let t;
-  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => swiper.update(), 250); });
-
-  // Botões "Comprar" do carrossel estático do HTML
-  document.querySelectorAll('.product-card__button').forEach(btn => {
-    btn.addEventListener('click', function() {
-      // O carrossel do HTML é decorativo/estático; abre a home para comprar
-      document.querySelector('.botonBar .list[data-target="home"]')?.click();
-      showToast('Navegue pelo catálogo para adicionar ao carrinho 👇', 'info');
-    });
-  });
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => _carouselSwiper.update(), 250); });
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1806,7 +1842,6 @@ async function loadAddresses() {
    ═══════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async function() {
   Auth.load();
-  initSwiper();
   initBottomBar();
   ensurePDOverlay();
   renderTopbarAvatar();
@@ -1817,7 +1852,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeProductDetail();
   });
-  await loadCatalog();       // carrega produtos do banco → renderCategories + renderGrid
+  await loadCatalog();       // carrega produtos do banco → renderCategories + renderGrid + renderCarousel
+  initSwiper();               // só inicializa o carrossel depois que os slides reais existem no DOM
   initDealTimer();
   if (Auth.isLoggedIn()) syncFavoritesFromServer();
 });
