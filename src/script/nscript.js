@@ -85,7 +85,11 @@ function normalizeProduct(row) {
     key:        String(row.id),   // ID global unico (1-99, 100-199, 200-299)
     brand:      brandId,
     brandLabel: row.marca || 'Outros',
-    name:       row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
+    // Lanches mostram só o nome (sem gramatura ao lado); as outras categorias
+    // continuam mostrando o peso/volume, que ajuda a diferenciar porção/bebida.
+    name:       row.table_name === 'LANCHES'
+                  ? row.nome
+                  : row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
     baseName:   row.nome,
     description: row.descricao || '',
     ingredients: (row.ingredientes || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean),
@@ -393,7 +397,7 @@ function bindGridEvents(container) {
 /* ═══════════════════════════════════════════════════════════
    TELA DE DETALHE / PERSONALIZAR PRODUTO
    ═══════════════════════════════════════════════════════════ */
-let pdState = null; // { key, qty, removed: Set<string> }
+let pdState = null; // { key, qty, removed: Set<string>, added: { [ingredientKey]: qty } }
 
 function ensurePDOverlay() {
   if (document.getElementById('pd-overlay')) return;
@@ -409,7 +413,7 @@ function ensurePDOverlay() {
 function openProductDetail(key) {
   const d = getDrinkByKey(key);
   if (!d) return;
-  pdState = { key: key, qty: 1, removed: new Set() };
+  pdState = { key: key, qty: 1, removed: new Set(), added: {} };
   renderProductDetail();
   document.getElementById('pd-overlay')?.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -421,6 +425,19 @@ function closeProductDetail() {
   pdState = null;
 }
 
+// Mostra a descrição do lanche como lista (um ingrediente por linha) em vez
+// de um parágrafo corrido. Usa a lista de ingredientes já cadastrada; se o
+// produto não tiver essa lista, cai pra separar a descrição por vírgulas.
+function pdDescriptionListHTML(d) {
+  const items = (d.ingredients && d.ingredients.length)
+    ? d.ingredients
+    : (d.description
+        ? d.description.replace(/\.\s*$/, '').split(',').map(function(s){ return s.trim(); }).filter(Boolean)
+        : []);
+  if (!items.length) return '';
+  return `<ul class="pd-desc-list">${items.map(function(i){ return `<li>${i}</li>`; }).join('')}</ul>`;
+}
+
 function renderProductDetail() {
   const root = document.getElementById('pd-overlay');
   if (!root || !pdState) return;
@@ -430,8 +447,15 @@ function renderProductDetail() {
   const discount   = d.onSale && d.salePrice ? Math.round((1 - d.salePrice / d.price) * 100) : 0;
   const finalPrice = discount ? d.price * (1 - discount / 100) : (d.salePrice ?? d.price);
   const isFav      = favorites.has(d.key);
-  const total      = finalPrice * pdState.qty;
   const hasIngredients = d.ingredients && d.ingredients.length > 0;
+
+  // Ingredientes extras disponíveis pra adicionar (categoria INGREDIENTES do cardápio)
+  const availableAddons = DRINKS.filter(function(p) { return p.table === 'INGREDIENTES'; });
+  const addonsTotal = availableAddons.reduce(function(sum, ing) {
+    const q = pdState.added[ing.key] || 0;
+    return sum + ing.price * q;
+  }, 0);
+  const total = (finalPrice + addonsTotal) * pdState.qty;
 
   root.innerHTML = `
     <div class="pd-sheet">
@@ -457,7 +481,7 @@ function renderProductDetail() {
               <span class="pd-price">${toBRL(finalPrice)}</span>
             </div>
           </div>
-          ${d.description ? `<p class="pd-desc">${d.description}</p>` : ''}
+          ${pdDescriptionListHTML(d)}
 
           <div class="pd-rate" id="pd-rate-widget"></div>
 
@@ -476,6 +500,29 @@ function renderProductDetail() {
                       <span class="pd-toggle__track"><span class="pd-toggle__thumb"></span></span>
                     </span>
                   </label>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+
+          ${availableAddons.length ? `
+          <div class="pd-addons">
+            <h3 class="pd-addons__title">Quer adicionar algo?</h3>
+            <p class="pd-customize__hint">Ingredientes extras, cobrados à parte.</p>
+            <div class="pd-addon-list">
+              ${availableAddons.map(function(ing) {
+                const qty = pdState.added[ing.key] || 0;
+                return `
+                  <div class="pd-addon-row">
+                    <div class="pd-addon-row__info">
+                      <span class="pd-addon-row__name">${ing.baseName || ing.name}</span>
+                      <span class="pd-addon-row__price">+ ${toBRL(ing.price)}</span>
+                    </div>
+                    <div class="pd-addon-row__qty">
+                      <button class="pd-addon-row__btn" data-action="dec" data-id="${ing.key}" aria-label="Diminuir ${ing.baseName||ing.name}">−</button>
+                      <span>${qty}</span>
+                      <button class="pd-addon-row__btn" data-action="inc" data-id="${ing.key}" aria-label="Aumentar ${ing.baseName||ing.name}">+</button>
+                    </div>
+                  </div>`;
               }).join('')}
             </div>
           </div>` : ''}
@@ -586,9 +633,26 @@ function bindProductDetailEvents() {
     renderProductDetail();
   });
 
+  root.querySelectorAll('.pd-addon-row__btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (!pdState) return;
+      const id = this.dataset.id;
+      const current = pdState.added[id] || 0;
+      if (this.dataset.action === 'inc') pdState.added[id] = current + 1;
+      else pdState.added[id] = Math.max(0, current - 1);
+      renderProductDetail();
+    });
+  });
+
   root.querySelector('#pd-add-btn')?.addEventListener('click', function() {
     if (!pdState) return;
-    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed));
+    const addedList = Object.keys(pdState.added)
+      .filter(function(id) { return pdState.added[id] > 0; })
+      .map(function(id) {
+        const ing = getDrinkByKey(id);
+        return { id: id, name: ing ? (ing.baseName || ing.name) : id, price: ing ? ing.price : 0, qty: pdState.added[id] };
+      });
+    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed), addedList);
     closeProductDetail();
   });
 }
@@ -662,14 +726,18 @@ function getDrinkByKey(key) {
   return DRINKS.find(d => d.key === key) || DEALS.find(d => d.key === key) || null;
 }
 
-function addToCart(key, qty, removed) {
+function addToCart(key, qty, removed, added) {
   qty = qty || 1;
   removed = removed || [];
+  added = added || [];
   const drink = getDrinkByKey(key);
   if (!drink) return;
-  const cartKey = removed.length ? key + '::' + removed.slice().sort().join('|') : key;
+  const remPart = removed.length ? 'rem:' + removed.slice().sort().join('|') : '';
+  const addPart = added.length ? 'add:' + added.map(function(a){ return a.id+'x'+a.qty; }).sort().join('|') : '';
+  const extra   = [remPart, addPart].filter(Boolean).join('::');
+  const cartKey = extra ? key + '::' + extra : key;
   if (cart[cartKey]) cart[cartKey].qty += qty;
-  else cart[cartKey] = { drink, qty:qty, removed: removed.slice() };
+  else cart[cartKey] = { drink, qty:qty, removed: removed.slice(), added: added.slice() };
   updateCartBadge();
   showToast(drink.name + ' adicionado ao carrinho! 🛒', 'success');
   document.querySelectorAll('.grid-card__btn[data-key="' + key + '"]').forEach(function(btn) {
@@ -681,8 +749,21 @@ function addToCart(key, qty, removed) {
   });
 }
 
+// Preço unitário efetivo do item do carrinho: preço base + soma dos
+// ingredientes extras adicionados (cada extra é cobrado por unidade do lanche).
+function cartUnitPrice(obj) {
+  const base = obj.drink.salePrice || obj.drink.price;
+  const addedTotal = (obj.added || []).reduce(function(s, a) { return s + a.price * a.qty; }, 0);
+  return base + addedTotal;
+}
+
 function cartItemLabel(obj) {
-  return obj.drink.name + (obj.removed && obj.removed.length ? ' (sem ' + obj.removed.join(', ') + ')' : '');
+  let label = obj.drink.name;
+  if (obj.removed && obj.removed.length) label += ' (sem ' + obj.removed.join(', ') + ')';
+  if (obj.added && obj.added.length) {
+    label += ' (+ ' + obj.added.map(function(a){ return a.qty > 1 ? a.qty+'x '+a.name : a.name; }).join(', ') + ')';
+  }
+  return label;
 }
 
 function updateCartBadge() {
@@ -699,7 +780,7 @@ function cartTotals() {
     return Object.assign({ cartKey: k }, cart[k]);
   });
   const subtotal = items.reduce(function(s, obj) {
-    return s + (obj.drink.salePrice || obj.drink.price) * obj.qty;
+    return s + cartUnitPrice(obj) * obj.qty;
   }, 0);
   const discount = checkoutState.couponDiscount;
   const total    = Math.max(0, subtotal - discount);
@@ -791,9 +872,11 @@ function renderCart() {
 function renderCartItem(obj) {
   const d   = obj.drink;
   const qty = obj.qty;
-  const price = d.salePrice || d.price;
+  const price = cartUnitPrice(obj);
   const removedNote = obj.removed && obj.removed.length
     ? `<p class="cart-item__note">Sem: ${obj.removed.join(', ')}</p>` : '';
+  const addedNote = obj.added && obj.added.length
+    ? `<p class="cart-item__note">+ ${obj.added.map(function(a){ return a.qty > 1 ? a.qty+'x '+a.name : a.name; }).join(', ')}</p>` : '';
   return `
     <div class="cart-item" data-key="${obj.cartKey}">
       <img class="cart-item__img" src="${d.img}" alt="${d.name}" width="60" height="80"
@@ -801,6 +884,7 @@ function renderCartItem(obj) {
       <div class="cart-item__info">
         <p class="cart-item__name">${d.name}</p>
         ${removedNote}
+        ${addedNote}
         <p class="cart-item__price">${toBRL(price * qty)}</p>
         <p class="cart-item__unit">Un.: ${toBRL(price)}</p>
       </div>
@@ -1020,7 +1104,7 @@ async function checkout() {
   const payload = {
     items: items.map(function(obj) {
       return { id:obj.drink.id, table_name:obj.drink.table, name:cartItemLabel(obj),
-               price:obj.drink.salePrice||obj.drink.price, qty:obj.qty };
+               price:cartUnitPrice(obj), qty:obj.qty };
     }),
     subtotal:       subtotal,
     total:          total,
@@ -1054,7 +1138,7 @@ async function checkout() {
   // Gera mensagem WhatsApp
   const payLabel = PAYMENT_METHODS.find(function(m){ return m.id===checkoutState.paymentMethod; });
   const itemsText = items.map(function(obj) {
-    return obj.qty + 'x ' + cartItemLabel(obj) + ' – ' + toBRL((obj.drink.salePrice||obj.drink.price)*obj.qty);
+    return obj.qty + 'x ' + cartItemLabel(obj) + ' – ' + toBRL(cartUnitPrice(obj)*obj.qty);
   }).join('%0A');
 
   let msg = '*Novo Pedido Rock Burger %23' + orderId + '*%0A%0A';

@@ -69,11 +69,16 @@ if ($path === '') $path = '/';
 /* ════════════════════════════════════════════════════════════
    CATÁLOGO
    ════════════════════════════════════════════════════════════ */
+// Lanches e Acompanhamentos (porções) aparecem do maior pro menor preço;
+// as demais categorias mantêm a ordem de cadastro.
+$PRICE_DESC_TABLES = array('LANCHES','ACOMPANHAMENTOS');
+
 if ($method==='GET' && $path==='/catalog') {
     $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
     $all = array();
     foreach ($tables as $t) {
-        $rows = db()->query("SELECT *,'$t' AS table_name FROM `$t` ORDER BY id")->fetchAll();
+        $orderBy = in_array($t, $PRICE_DESC_TABLES) ? 'preco DESC' : 'id';
+        $rows = db()->query("SELECT *,'$t' AS table_name FROM `$t` ORDER BY $orderBy")->fetchAll();
         foreach ($rows as $r) $all[] = $r;
     }
     json_ok($all);
@@ -82,10 +87,11 @@ if ($method==='GET' && $path==='/catalog/deals') {
     $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
     $all = array();
     foreach ($tables as $t) {
+        $orderBy = in_array($t, $PRICE_DESC_TABLES) ? 'preco DESC' : 'id';
         $rows = db()->query(
             "SELECT *,'$t' AS table_name FROM `$t`
              WHERE promocao=1 AND (promocao_expira_em IS NULL OR promocao_expira_em > NOW())
-             ORDER BY id"
+             ORDER BY $orderBy"
         )->fetchAll();
         foreach ($rows as $r) $all[] = $r;
     }
