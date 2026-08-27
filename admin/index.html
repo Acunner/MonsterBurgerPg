@@ -530,10 +530,11 @@ a{text-decoration:none;color:inherit;}
 
 <!-- ══ MODAIS ══ -->
 
-<!-- Modal: editar pedido status -->
+<!-- Modal: editar pedido completo (itens, valores, endereço, pagamento, status, excluir) -->
 <div class="modal-overlay" id="modal-order">
-  <div class="modal">
-    <h2>Atualizar Pedido <span id="mo-id"></span></h2>
+  <div class="modal" style="max-width:560px">
+    <h2>Editar Pedido <span id="mo-id"></span></h2>
+
     <div class="field"><label>Status</label>
       <select id="mo-status">
         <option value="pendente">Pendente</option>
@@ -544,10 +545,43 @@ a{text-decoration:none;color:inherit;}
         <option value="cancelado">Cancelado</option>
       </select>
     </div>
-    <div id="mo-items" style="margin-top:.5rem;font-size:.82rem;color:var(--muted)"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-order')">Cancelar</button>
-      <button class="btn btn-primary" id="btn-save-order-status">Salvar</button>
+
+    <div class="field">
+      <label>Itens do pedido</label>
+      <div id="mo-items-list"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <select id="mo-add-product" style="flex:1"></select>
+        <button class="btn btn-ghost" type="button" onclick="addOrderItemRow()">+ Item</button>
+      </div>
+    </div>
+
+    <div class="field"><label>Desconto (R$)</label>
+      <input type="number" id="mo-discount" step="0.01" min="0" value="0"/>
+    </div>
+
+    <div class="field"><label>Endereço</label>
+      <input type="text" id="mo-address" placeholder="Rua, número — bairro (ou vazio p/ retirada)"/>
+    </div>
+
+    <div class="field"><label>Forma de pagamento</label>
+      <select id="mo-payment">
+        <option value="pix">PIX</option>
+        <option value="dinheiro">Dinheiro</option>
+        <option value="cartao_credito">Cartão de Crédito</option>
+        <option value="cartao_debito">Cartão de Débito</option>
+      </select>
+    </div>
+
+    <div style="text-align:right;font-size:1.05rem;font-weight:700;margin-top:.5rem">
+      Total: <span id="mo-total-preview">R$ 0,00</span>
+    </div>
+
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" type="button" onclick="deleteOrder()">Excluir pedido</button>
+      <div style="display:flex;gap:.75rem">
+        <button class="btn btn-ghost" onclick="closeModal('modal-order')">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-order-status">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -846,9 +880,133 @@ async function loadOrders(){
         <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="openOrderModal(${o.id},'${o.status}')">Editar</button>
         <button class="btn btn-primary" style="font-size:.75rem;padding:5px 10px" ${o.customer_phone?'':'disabled title="Sem telefone cadastrado"'}
                 onclick="confirmOrderWhatsApp(${o.id})">Confirmar no WhatsApp</button>
+        <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="printOrder(${o.id})">🖨️ Imprimir</button>
       </td>
     </tr>`).join('');
 }
+
+// ── Impressão do pedido: via cozinha + via entregador ──────────
+// Divide o nome do item de volta nas partes (removido/adicionado/bebida do
+// combo) que o site já grava dentro do texto — ex.:
+// "AC/DC (sem Queijo) (+ Bacon Extra) (Refrigerante: Coca-Cola 350ml)"
+function parseOrderItemName(fullName){
+  let name = String(fullName||'');
+  const lines = [];
+  let m;
+  m = name.match(/ \(sem ([^)]+)\)/i);
+  if(m){ m[1].split(',').forEach(x=>lines.push({sign:'–',text:'Sem '+x.trim()})); name = name.replace(m[0],''); }
+  m = name.match(/ \(\+ ([^)]+)\)/);
+  if(m){ m[1].split(',').forEach(x=>lines.push({sign:'+',text:'Add '+x.trim()})); name = name.replace(m[0],''); }
+  m = name.match(/ \(Refrigerante: ([^)]+)\)/i);
+  if(m){ lines.push({sign:'🥤',text:m[1].trim()}); name = name.replace(m[0],''); }
+  return { base: name.trim(), lines };
+}
+
+const CATEGORY_HEADERS = { BEBIDAS:'Bebidas', ACOMPANHAMENTOS:'Acompanhamentos' };
+
+// Monta o bloco de itens de uma via: LANCHES/COMBOS primeiro sem título,
+// depois Bebidas/Acompanhamentos cada um com seu próprio subtítulo.
+function buildOrderItemsHTML(items){
+  const principal = items.filter(i => !CATEGORY_HEADERS[i.table_name]);
+  const outros     = items.filter(i =>  CATEGORY_HEADERS[i.table_name]);
+
+  function itemBlock(i){
+    const parsed = parseOrderItemName(i.product_name);
+    const qtyPrefix = Number(i.qty) > 1 ? `${i.qty}x ` : '';
+    return `
+      <div class="pi-item">
+        <p class="pi-item__name">${qtyPrefix}${parsed.base}</p>
+        ${parsed.lines.map(l=>`<p class="pi-item__mod">${l.sign} ${l.text}</p>`).join('')}
+      </div>`;
+  }
+
+  let html = principal.map(itemBlock).join('');
+
+  // agrupa "outros" por categoria mantendo a ordem em que aparecem
+  const grouped = {};
+  outros.forEach(i=>{ (grouped[i.table_name] = grouped[i.table_name]||[]).push(i); });
+  Object.keys(grouped).forEach(function(cat){
+    html += `<p class="pi-cat">${CATEGORY_HEADERS[cat]}</p>` + grouped[cat].map(itemBlock).join('');
+  });
+
+  return html || '<p class="pi-item__name">—</p>';
+}
+
+function buildOrderPrintHTML(o, items){
+  const dataHora = new Date(o.created_at).toLocaleDateString('pt-BR') + ' ' +
+                   new Date(o.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const itemsHTML = buildOrderItemsHTML(items);
+  const logoTag = `<img class="pi-logo" src="/src/img/logos/favicon-32.png" alt=""/>`;
+
+  const viaCozinha = `
+    <section class="pi-via">
+      <div class="pi-head">${logoTag}<span>Rock Burger</span></div>
+      <p class="pi-sub">Pedido #${o.id} — ${dataHora}</p>
+      <p class="pi-tag">VIA COZINHA</p>
+      <hr/>
+      ${itemsHTML}
+    </section>`;
+
+  const viaEntregador = `
+    <section class="pi-via">
+      <div class="pi-head">${logoTag}<span>Rock Burger</span></div>
+      <p class="pi-sub">Pedido #${o.id}</p>
+      <p class="pi-tag">VIA ENTREGADOR</p>
+      <hr/>
+      ${itemsHTML}
+      <hr/>
+      <p class="pi-label">Endereço</p>
+      <p class="pi-value">${o.address_text || '— (retirada no local)'}</p>
+      <p class="pi-label">Valor</p>
+      <p class="pi-value pi-value--big">${toBRL(o.total)}</p>
+      <p class="pi-label">Forma de pagamento</p>
+      <p class="pi-value">${PAY_LABELS[o.payment_method]||o.payment_method||'—'}</p>
+    </section>`;
+
+  return `<!doctype html>
+<html lang="pt-br"><head><meta charset="UTF-8"/>
+<title>Pedido #${o.id} — Impressão</title>
+<style>
+  * { box-sizing:border-box; }
+  body { font-family:'Courier New',monospace; color:#000; background:#fff; margin:0; padding:0; }
+  .pi-via {
+    width:302px; margin:0 auto; padding:16px 10px;
+    page-break-after:always;
+  }
+  .pi-via:last-child { page-break-after:auto; }
+  .pi-head { display:flex; align-items:center; gap:8px; justify-content:center; }
+  .pi-logo { width:26px; height:26px; object-fit:contain; }
+  .pi-head span { font-size:16px; font-weight:700; letter-spacing:0.5px; }
+  .pi-sub { text-align:center; font-size:11px; margin-top:2px; }
+  .pi-tag { text-align:center; font-size:12px; font-weight:700; letter-spacing:1px; margin-top:6px; }
+  hr { border:none; border-top:1px dashed #000; margin:8px 0; }
+  .pi-item__name { font-size:13px; font-weight:700; margin-top:8px; }
+  .pi-item__mod  { font-size:12px; margin-left:10px; }
+  .pi-cat { font-size:12px; font-weight:700; text-transform:uppercase; margin-top:12px; border-top:1px dashed #000; padding-top:6px; }
+  .pi-label { font-size:11px; text-transform:uppercase; color:#333; margin-top:10px; }
+  .pi-value { font-size:13px; font-weight:600; }
+  .pi-value--big { font-size:16px; }
+  @media print { @page { margin:6mm; } }
+</style>
+</head><body>
+${viaCozinha}
+${viaEntregador}
+<script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
+</body></html>`;
+}
+
+window.printOrder = async function(id){
+  const o = ordersCache[id];
+  if(!o){ toast('Pedido não encontrado, atualize a lista.','err'); return; }
+  const res = await api('GET', `/orders/${id}/items`);
+  if(!res.ok){ toast('Erro ao carregar itens do pedido','err'); return; }
+
+  const win = window.open('', '_blank', 'width=380,height=640');
+  if(!win){ toast('O navegador bloqueou a janela de impressão. Permita pop-ups.','err'); return; }
+  win.document.open();
+  win.document.write(buildOrderPrintHTML(o, res.data));
+  win.document.close();
+};
 
 // Normaliza telefone BR pro formato do wa.me (só dígitos, com DDI 55)
 function normalizePhoneBR(phone){
@@ -886,19 +1044,103 @@ $('auto-refresh').addEventListener('change', function(){
 });
 
 let currentOrderId = null;
+let moItems = []; // buffer editável: [{product_id, table_name, product_name, unit_price, qty}]
+
+function renderMoItems(){
+  const wrap = $('mo-items-list');
+  wrap.innerHTML = moItems.length ? moItems.map((it,idx)=>`
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${it.product_name}">${it.product_name}</span>
+      <input type="number" min="1" value="${it.qty}" data-idx="${idx}" data-field="qty"
+             class="mo-item-input" style="width:52px;padding:6px 8px"/>
+      <input type="number" min="0" step="0.01" value="${it.unit_price}" data-idx="${idx}" data-field="unit_price"
+             class="mo-item-input" style="width:84px;padding:6px 8px"/>
+      <button class="btn btn-ghost" type="button" style="padding:4px 9px" onclick="removeMoItem(${idx})">✕</button>
+    </div>`).join('') : `<p style="color:var(--muted);font-size:.82rem">Nenhum item — adicione pelo menos 1.</p>`;
+
+  wrap.querySelectorAll('.mo-item-input').forEach(inp=>{
+    inp.addEventListener('input', function(){
+      const idx = Number(this.dataset.idx), field = this.dataset.field;
+      const v = Number(this.value);
+      moItems[idx][field] = field==='qty' ? Math.max(1, Math.round(v)||1) : Math.max(0, v||0);
+      updateMoTotal();
+    });
+  });
+  updateMoTotal();
+}
+
+window.removeMoItem = function(idx){ moItems.splice(idx,1); renderMoItems(); };
+
+function updateMoTotal(){
+  const subtotal = moItems.reduce((s,it)=>s+it.unit_price*it.qty,0);
+  const discount = Number($('mo-discount').value)||0;
+  const total = Math.max(0, subtotal-discount);
+  $('mo-total-preview').textContent = toBRL(total);
+}
+
+function fillMoProductPicker(){
+  const sel = $('mo-add-product');
+  sel.innerHTML = '<option value="">+ escolher produto…</option>' +
+    allProducts.map(p=>`<option value="${p.table_name}::${p.id}">${p.nome} — ${toBRL(p.preco)}</option>`).join('');
+}
+
+window.addOrderItemRow = function(){
+  const sel = $('mo-add-product');
+  if(!sel.value) return;
+  const [table_name, pid] = sel.value.split('::');
+  const p = allProducts.find(x=>x.table_name===table_name && String(x.id)===pid);
+  if(!p) return;
+  moItems.push({ product_id:Number(p.id), table_name:p.table_name, product_name:p.nome, unit_price:Number(p.preco), qty:1 });
+  sel.value = '';
+  renderMoItems();
+};
+
+$('mo-discount').addEventListener('input', updateMoTotal);
+
 window.openOrderModal = async function(id, status){
   currentOrderId = id;
   $('mo-id').textContent = '#'+id;
   $('mo-status').value   = status;
+
+  const o = ordersCache[id] || {};
+  $('mo-discount').value = o.discount || 0;
+  $('mo-address').value  = o.address_text || '';
+  $('mo-payment').value  = o.payment_method || 'pix';
+
+  if(!allProducts.length) await loadProducts();
+  fillMoProductPicker();
+
   const items = await api('GET',`/orders/${id}/items`);
-  $('mo-items').innerHTML = items.ok ? items.data.map(i=>`<div style="margin-bottom:3px">${i.qty}x ${i.product_name} — ${toBRL(i.unit_price)}</div>`).join('') : '';
+  moItems = items.ok ? items.data.map(i=>({
+    product_id: Number(i.product_id), table_name: i.table_name,
+    product_name: i.product_name, unit_price: Number(i.unit_price), qty: Number(i.qty),
+  })) : [];
+  renderMoItems();
+
   openModal('modal-order');
 };
+
 $('btn-save-order-status').addEventListener('click', async()=>{
-  const res = await api('PUT',`/orders/${currentOrderId}/status`,{status:$('mo-status').value});
-  if(res.ok){ toast('Status atualizado!'); closeModal('modal-order'); loadOrders(); }
+  if(moItems.length===0){ toast('O pedido precisa ter pelo menos 1 item.','err'); return; }
+  const payload = {
+    status: $('mo-status').value,
+    items: moItems.map(it=>({ id: it.product_id, table_name: it.table_name, name: it.product_name, price: it.unit_price, qty: it.qty })),
+    discount: Number($('mo-discount').value)||0,
+    address_text: $('mo-address').value.trim(),
+    payment_method: $('mo-payment').value,
+  };
+  const res = await api('PUT',`/orders/${currentOrderId}`,payload);
+  if(res.ok){ toast('Pedido atualizado!'); closeModal('modal-order'); loadOrders(); }
   else toast(res.error||'Erro','err');
 });
+
+window.deleteOrder = async function(){
+  if(!currentOrderId) return;
+  if(!confirm(`Tem certeza que quer excluir o pedido #${currentOrderId}? Essa ação não pode ser desfeita.`)) return;
+  const res = await api('DELETE',`/orders/${currentOrderId}`);
+  if(res.ok){ toast('Pedido excluído.'); closeModal('modal-order'); loadOrders(); }
+  else toast(res.error||'Erro ao excluir','err');
+};
 
 // ════════════════════════════════════════════════════════════
 //  PRODUTOS

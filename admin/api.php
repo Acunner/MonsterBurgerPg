@@ -97,6 +97,76 @@ if($method==='GET' && preg_match('#^/orders/(\d+)/items$#',$path,$pm)){
     json_ok($s->fetchAll());
 }
 
+// PUT /orders/{id} — edição completa: itens, valores, endereço, pagamento e status
+if($method==='PUT' && preg_match('#^/orders/(\d+)$#',$path,$pm)){
+    auth_staff();
+    $oid = (int)$pm[1];
+    $b   = body();
+
+    $existing = db()->prepare('SELECT id FROM orders WHERE id=?');
+    $existing->execute([$oid]);
+    if(!$existing->fetch()) json_err('Pedido não encontrado.',404);
+
+    $items = isset($b['items']) && is_array($b['items']) ? $b['items'] : [];
+    if(empty($items)) json_err('O pedido precisa ter pelo menos 1 item.');
+
+    $validStatus = ['pendente','confirmado','em_preparo','em_entrega','entregue','cancelado'];
+    $validPay    = ['dinheiro','pix','cartao_credito','cartao_debito'];
+    $status  = in_array($b['status']??'', $validStatus) ? $b['status'] : null;
+    $payment = in_array($b['payment_method']??'', $validPay) ? $b['payment_method'] : 'pix';
+    $addr    = isset($b['address_text']) ? trim($b['address_text']) : '';
+    $discount= (float)(isset($b['discount']) ? $b['discount'] : 0);
+
+    // subtotal/total recalculados no servidor a partir dos itens recebidos
+    // (não confia só no que o front mandou pronto)
+    $subtotal = 0;
+    foreach($items as $it){
+        $subtotal += (float)(isset($it['price']) ? $it['price'] : 0) * (int)(isset($it['qty']) ? $it['qty'] : 1);
+    }
+    $total = max(0, $subtotal - $discount);
+
+    $pdo = db();
+    $pdo->beginTransaction();
+    try{
+        $sql = 'UPDATE orders SET subtotal=?, total=?, discount=?, address_text=?, payment_method=?';
+        $params = [$subtotal, $total, $discount, $addr ?: null, $payment];
+        if($status){ $sql .= ', status=?'; $params[] = $status; }
+        $sql .= ' WHERE id=?';
+        $params[] = $oid;
+        $pdo->prepare($sql)->execute($params);
+
+        $pdo->prepare('DELETE FROM order_items WHERE order_id=?')->execute([$oid]);
+        $ins = $pdo->prepare(
+            'INSERT INTO order_items (order_id,product_id,table_name,product_name,unit_price,qty)
+             VALUES (?,?,?,?,?,?)'
+        );
+        foreach($items as $it){
+            $ins->execute([
+                $oid,
+                (int)(isset($it['id']) ? $it['id'] : 0),
+                isset($it['table_name']) ? $it['table_name'] : 'LANCHES',
+                isset($it['name']) ? $it['name'] : '',
+                (float)(isset($it['price']) ? $it['price'] : 0),
+                (int)(isset($it['qty']) ? $it['qty'] : 1),
+            ]);
+        }
+        $pdo->commit();
+        json_ok(['order_id'=>$oid,'total'=>$total]);
+    } catch(Exception $e){
+        $pdo->rollBack();
+        json_err('Erro ao salvar pedido: '.$e->getMessage(), 500);
+    }
+}
+
+// DELETE /orders/{id} — apaga o pedido (os itens somem junto, FK em cascata)
+if($method==='DELETE' && preg_match('#^/orders/(\d+)$#',$path,$pm)){
+    auth_staff();
+    $s = db()->prepare('DELETE FROM orders WHERE id=?');
+    $s->execute([(int)$pm[1]]);
+    if($s->rowCount()===0) json_err('Pedido não encontrado.',404);
+    json_ok('Pedido excluído.');
+}
+
 // ════════════════════════════════════════════════════════════
 //  PRODUTOS
 // ════════════════════════════════════════════════════════════
