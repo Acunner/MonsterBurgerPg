@@ -44,9 +44,7 @@ function v($path) {
     <div id="app">
       <!-- ══════════════════ HEADER ══════════════════ -->
       <header class="topBar">
-        <button class="topBar__hamburger" aria-label="Menu">☰</button>
         <div class="topBar__logo">Rock Burger</div>
-        <button class="topBar__avatar" id="topbar-avatar" aria-label="Ver perfil"></button>
       </header>
 
       <!-- ══════════════════ TELAS ══════════════════ -->

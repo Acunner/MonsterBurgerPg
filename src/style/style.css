@@ -86,7 +86,7 @@ main {
    ═══════════════════════════════════════════════════════════ */
 .topBar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   background: rgba(38, 34, 32, 0.55);
   backdrop-filter: blur(18px) saturate(1.5);
