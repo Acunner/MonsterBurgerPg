@@ -258,43 +258,47 @@ main {
 }
 .brand-filter::before, .brand-filter::after {
   content: ""; position: absolute; top: 0;
-  width: 40px; height: 100%; pointer-events: none; z-index: 2;
+  width: 24px; height: 100%; pointer-events: none; z-index: 2;
 }
 .brand-filter::before { left: 0; background: linear-gradient(to right, var(--color-bg-primary), transparent); }
 .brand-filter::after  { right: 0; background: linear-gradient(to left,  var(--color-bg-primary), transparent); }
 .brand-filter__track {
-  display: flex; gap: var(--spacing-sm);
+  display: flex; justify-content: center;
+  gap: var(--spacing-lg);
   overflow-x: auto; scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  padding: var(--spacing-xs) 4px var(--spacing-sm);
+  padding: var(--spacing-sm) 20px var(--spacing-sm);
   scrollbar-width: none;
 }
 .brand-filter__track::-webkit-scrollbar { display: none; }
 .brand-chip {
   flex-shrink: 0; scroll-snap-align: start;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
   cursor: pointer; background: transparent; padding: 0;
   transition: transform var(--transition-fast);
 }
 .brand-chip:hover  { transform: translateY(-2px); }
+.brand-chip:hover .brand-chip__logo { border-color: rgba(255,45,149,0.35); }
 .brand-chip:active { transform: scale(0.95); }
 .brand-chip__logo {
-  width: 60px; height: 60px; border-radius: 50%;
+  width: 56px; height: 56px; border-radius: 50%;
   background: rgba(38,34,32,0.55);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 2px solid rgba(255,45,149,0.2);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   display: flex; align-items: center; justify-content: center; overflow: hidden;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
 }
 .brand-chip__logo ion-icon {
-  font-size: 26px;
-  color: rgba(255,255,255,0.65);
+  font-size: 24px;
+  color: rgba(255,255,255,0.6);
   transition: color var(--transition-fast);
 }
 .brand-chip__label {
-  font-size: 0.65rem; color: rgba(255,255,255,0.55);
-  font-family: "Crimson Text", serif; letter-spacing: 0.5px;
+  font-size: 0.7rem; color: rgba(255,255,255,0.55);
+  font-family: "Crimson Text", serif; letter-spacing: 0.3px;
+  white-space: nowrap;
   transition: color var(--transition-fast);
 }
 .brand-chip.active .brand-chip__logo {
