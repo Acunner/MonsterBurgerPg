@@ -26,6 +26,11 @@ function v($path) {
     <meta name="description" content="Rock Burger - Lanches e Combos" />
     <title>Rock Burger - Lanches e Combos</title>
 
+    <!-- Favicon (caveira com moicano rosa) -->
+    <link rel="icon" href="<?= v('/favicon.ico') ?>" sizes="any" />
+    <link rel="icon" type="image/png" href="<?= v('/src/img/logos/favicon-32.png') ?>" sizes="32x32" />
+    <link rel="apple-touch-icon" href="<?= v('/src/img/logos/favicon-180.png') ?>" />
+
     <!-- Fontes externas (sem cache busting — CDN gerencia) -->
     <link
       href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;500&family=Playfair+Display:wght@700&display=swap"
@@ -44,15 +49,13 @@ function v($path) {
     <div id="app">
       <!-- ══════════════════ HEADER ══════════════════ -->
       <header class="topBar">
-        <div class="topBar__logo">Rock Burger</div>
+        <img class="topBar__logo-img" src="<?= v('/src/img/logos/logo-topo.png') ?>" alt="Rock Burger" />
       </header>
 
       <!-- ══════════════════ TELAS ══════════════════ -->
       <main id="screens">
         <!-- ▸ HOME -->
         <section class="screen active" data-screen="home" aria-label="Home">
-          <div class="home-greeting" id="home-greeting"></div>
-
           <section class="products-carousel" aria-label="Produtos em Destaque">
             <div class="swiper-container">
               <!-- Preenchido dinamicamente via JS (renderCarousel) com combos e
@@ -64,7 +67,8 @@ function v($path) {
             </div>
           </section>
 
-          <section class="brand-filter" aria-label="Filtrar por marca">
+          <section class="brand-filter" aria-label="Filtrar por categoria">
+            <h2 class="brand-filter__title">Categorias</h2>
             <div class="brand-filter__track" id="brand-track"></div>
           </section>
 

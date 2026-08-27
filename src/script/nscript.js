@@ -87,12 +87,11 @@ function normalizeProduct(row) {
     key:        String(row.id),   // ID global unico (1-99, 100-199, 200-299)
     brand:      brandId,
     brandLabel: row.marca || 'Outros',
-    // Lanches e combos mostram só o nome (sem gramatura/tamanho ao lado);
-    // as outras categorias continuam mostrando o peso/volume, que ajuda a
-    // diferenciar porção/bebida.
-    name:       (row.table_name === 'LANCHES' || row.table_name === 'COMBOS')
-                  ? row.nome
-                  : row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
+    // Só as bebidas mostram o volume ao lado do nome (ex.: "Coca-Cola
+    // 350ml") — nas outras categorias o peso/tamanho fica só nos bastidores.
+    name:       row.table_name === 'BEBIDAS'
+                  ? row.nome + ' ' + row.ml + 'ml'
+                  : row.nome,
     baseName:   row.nome,
     description: row.descricao || '',
     ingredients: (row.ingredientes || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean),
