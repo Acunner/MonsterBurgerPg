@@ -459,6 +459,8 @@ function renderProductDetail() {
           </div>
           ${d.description ? `<p class="pd-desc">${d.description}</p>` : ''}
 
+          <div class="pd-rate" id="pd-rate-widget"></div>
+
           ${hasIngredients ? `
           <div class="pd-customize">
             <h3 class="pd-customize__title">Personalizar</h3>
@@ -491,6 +493,65 @@ function renderProductDetail() {
   `;
 
   bindProductDetailEvents();
+  loadPdRating(d);
+}
+
+/* ── Avaliação por estrelas (só quem já comprou) ─────────────── */
+async function loadPdRating(d) {
+  const el = document.getElementById('pd-rate-widget');
+  if (!el) return;
+
+  if (!Auth.isLoggedIn()) {
+    el.innerHTML = `<p class="pd-rate__hint">Entre na sua conta pra avaliar esse lanche.</p>`;
+    return;
+  }
+
+  el.innerHTML = `<p class="pd-rate__hint">Carregando avaliação…</p>`;
+  const res = await api('GET', `/ratings/status?table=${encodeURIComponent(d.table)}&product_id=${d.id}`);
+
+  // Se o cliente já fechou o modal ou trocou de produto enquanto carregava, ignora.
+  if (!pdState || pdState.key !== d.key) return;
+
+  if (!res.ok) { el.innerHTML = ''; return; }
+
+  if (!res.data.can_rate) {
+    el.innerHTML = `<p class="pd-rate__hint">Compre esse lanche pra poder avaliar.</p>`;
+    return;
+  }
+
+  renderPdRateStars(res.data.my_rating || 0);
+}
+
+function renderPdRateStars(current) {
+  const el = document.getElementById('pd-rate-widget');
+  if (!el) return;
+  el.innerHTML = `
+    <p class="pd-rate__hint">${current ? 'Sua avaliação:' : 'Avalie esse lanche:'}</p>
+    <div class="pd-rate__stars">
+      ${[1,2,3,4,5].map(function(n) {
+        return `<button class="pd-rate__star ${n<=current?'active':''}" data-n="${n}"
+                        aria-label="${n} estrela${n>1?'s':''}">★</button>`;
+      }).join('')}
+    </div>
+  `;
+  el.querySelectorAll('.pd-rate__star').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      if (!pdState) return;
+      const n = Number(this.dataset.n);
+      const d = getDrinkByKey(pdState.key);
+      if (!d) return;
+      const res = await api('POST', '/ratings', { table_name: d.table, product_id: d.id, stars: n });
+      if (res.ok) {
+        showToast('Avaliação enviada! Obrigado 🤘', 'success');
+        d.stars = Math.round(res.data.average);
+        renderPdRateStars(n);
+        const ratingEl = document.querySelector('#pd-overlay .pd-rating');
+        if (ratingEl) ratingEl.innerHTML = toStars(d.stars);
+      } else {
+        showToast(res.error || 'Erro ao avaliar', 'error');
+      }
+    });
+  });
 }
 
 function bindProductDetailEvents() {

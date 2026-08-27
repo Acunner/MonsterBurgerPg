@@ -803,6 +803,29 @@ main {
   margin-bottom: var(--spacing-md);
 }
 
+.pd-rate {
+  margin-bottom: var(--spacing-md);
+  min-height: 20px;
+}
+.pd-rate__hint {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 4px;
+}
+.pd-rate__stars { display: flex; gap: 4px; }
+.pd-rate__star {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  padding: 2px;
+}
+.pd-rate__star:hover { color: rgba(255,255,255,0.5); transform: scale(1.15); }
+.pd-rate__star.active { color: var(--color-accent); text-shadow: 0 0 8px var(--color-accent-glow); }
+
 .pd-customize { margin-top: var(--spacing-sm); }
 .pd-customize__title {
   font-family: "Playfair Display", serif;

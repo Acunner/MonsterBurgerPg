@@ -317,6 +317,66 @@ if ($method==='POST' && $path==='/orders') {
 }
 
 /* ════════════════════════════════════════════════════════════
+   AVALIAÇÕES (estrelas) — só quem já comprou pode avaliar
+   ════════════════════════════════════════════════════════════ */
+$RATEABLE_TABLES = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
+
+if ($method==='GET' && $path==='/ratings/status') {
+    $u     = auth_user();
+    $table = isset($_GET['table'])      ? $_GET['table']            : '';
+    $pid   = isset($_GET['product_id']) ? (int)$_GET['product_id']  : 0;
+    if (!in_array($table, $RATEABLE_TABLES)) json_err('Categoria inválida.');
+
+    $purchased = db()->prepare(
+        "SELECT COUNT(*) FROM order_items oi
+         JOIN orders o ON o.id=oi.order_id
+         WHERE o.user_id=? AND oi.table_name=? AND oi.product_id=?"
+    );
+    $purchased->execute(array($u['id'], $table, $pid));
+    $canRate = $purchased->fetchColumn() > 0;
+
+    $mine = db()->prepare('SELECT stars FROM product_ratings WHERE user_id=? AND table_name=? AND product_id=?');
+    $mine->execute(array($u['id'], $table, $pid));
+    $row = $mine->fetch();
+
+    json_ok(array('can_rate'=>$canRate, 'my_rating'=>$row ? (int)$row['stars'] : null));
+}
+
+if ($method==='POST' && $path==='/ratings') {
+    $u     = auth_user();
+    $b     = get_body();
+    $table = isset($b['table_name'])  ? $b['table_name']    : '';
+    $pid   = isset($b['product_id'])  ? (int)$b['product_id'] : 0;
+    $stars = isset($b['stars'])       ? (int)$b['stars']      : 0;
+
+    if (!in_array($table, $RATEABLE_TABLES)) json_err('Categoria inválida.');
+    if ($stars < 1 || $stars > 5) json_err('Nota deve ser de 1 a 5.');
+
+    $purchased = db()->prepare(
+        "SELECT COUNT(*) FROM order_items oi
+         JOIN orders o ON o.id=oi.order_id
+         WHERE o.user_id=? AND oi.table_name=? AND oi.product_id=?"
+    );
+    $purchased->execute(array($u['id'], $table, $pid));
+    if ($purchased->fetchColumn() == 0) json_err('Você só pode avaliar produtos que já comprou.', 403);
+
+    $pdo = db();
+    $pdo->prepare(
+        "INSERT INTO product_ratings (user_id,table_name,product_id,stars)
+         VALUES (?,?,?,?)
+         ON DUPLICATE KEY UPDATE stars=VALUES(stars), updated_at=NOW()"
+    )->execute(array($u['id'], $table, $pid, $stars));
+
+    $avg = $pdo->prepare('SELECT AVG(stars) FROM product_ratings WHERE table_name=? AND product_id=?');
+    $avg->execute(array($table, $pid));
+    $newAvg = round((float)$avg->fetchColumn(), 2);
+
+    $pdo->prepare("UPDATE `$table` SET rate=? WHERE id=?")->execute(array($newAvg, $pid));
+
+    json_ok(array('average'=>$newAvg));
+}
+
+/* ════════════════════════════════════════════════════════════
    FAVORITOS
    ════════════════════════════════════════════════════════════ */
 if ($method==='GET' && $path==='/favorites') {
