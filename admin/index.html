@@ -822,11 +822,15 @@ $('btn-load-dash').addEventListener('click', loadDashboard);
 const STATUS_LABELS={pendente:'Pendente',confirmado:'Confirmado',em_preparo:'Em preparo',em_entrega:'Em entrega',entregue:'Entregue',cancelado:'Cancelado'};
 const PAY_LABELS={pix:'PIX',dinheiro:'Dinheiro',cartao_credito:'Crédito',cartao_debito:'Débito'};
 
+let ordersCache = {};
+
 async function loadOrders(){
   const status = $('order-filter-status').value;
   const url    = status ? `/orders?status=${status}` : '/orders';
   const res    = await api('GET', url);
   if(!res.ok){ toast('Erro ao carregar pedidos','err'); return; }
+  ordersCache = {};
+  res.data.forEach(o => ordersCache[o.id] = o);
   const tbody = $('orders-tbody');
   tbody.innerHTML = res.data.map(o=>`
     <tr>
@@ -838,9 +842,40 @@ async function loadOrders(){
       <td>${PAY_LABELS[o.payment_method]||o.payment_method||'—'}</td>
       <td><span class="badge badge-${o.status}">${STATUS_LABELS[o.status]||o.status}</span></td>
       <td>${new Date(o.created_at).toLocaleDateString('pt-BR')}<br><small style="color:var(--muted)">${new Date(o.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small></td>
-      <td><button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="openOrderModal(${o.id},'${o.status}')">Editar</button></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="openOrderModal(${o.id},'${o.status}')">Editar</button>
+        <button class="btn btn-primary" style="font-size:.75rem;padding:5px 10px" ${o.customer_phone?'':'disabled title="Sem telefone cadastrado"'}
+                onclick="confirmOrderWhatsApp(${o.id})">Confirmar no WhatsApp</button>
+      </td>
     </tr>`).join('');
 }
+
+// Normaliza telefone BR pro formato do wa.me (só dígitos, com DDI 55)
+function normalizePhoneBR(phone){
+  let digits = String(phone||'').replace(/\D/g,'');
+  if(!digits) return '';
+  if(digits.length===10 || digits.length===11) digits = '55'+digits; // DDD+número sem DDI
+  return digits;
+}
+
+// Confirma o pedido (status=confirmado) e abre o WhatsApp do cliente
+// já com a mensagem de confirmação pronta pra enviar.
+window.confirmOrderWhatsApp = async function(id){
+  const o = ordersCache[id];
+  if(!o){ toast('Pedido não encontrado, atualize a lista.','err'); return; }
+  const phoneDigits = normalizePhoneBR(o.customer_phone);
+  if(!phoneDigits){ toast('Esse pedido não tem telefone cadastrado.','err'); return; }
+
+  const res = await api('PUT',`/orders/${id}/status`,{status:'confirmado'});
+  if(!res.ok){ toast(res.error||'Erro ao confirmar pedido','err'); return; }
+
+  const msg = `Oi ${o.customer_name||''}! 🤘🍔 Seu pedido *#${id}* na Rock Burger foi confirmado e já está sendo preparado. Total: *${toBRL(o.total)}*. Chega logo!`;
+  const waUrl = 'https://wa.me/'+phoneDigits+'?text='+encodeURIComponent(msg);
+  window.open(waUrl, '_blank');
+
+  toast('Pedido confirmado! Abrindo WhatsApp…');
+  loadOrders();
+};
 $('btn-load-orders').addEventListener('click', loadOrders);
 $('order-filter-status').addEventListener('change', loadOrders);
 

@@ -3,6 +3,11 @@ DirectoryIndex index.html
 
 RewriteEngine On
 
+# Garante que o header Authorization (token do funcionário/admin)
+# chegue no PHP — mesma correção do api/.htaccess.
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
 # Arquivos reais passam direto (index.html, api.php, etc.)
 RewriteCond %{REQUEST_FILENAME} !-f
 

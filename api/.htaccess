@@ -2,5 +2,13 @@
 Options -Indexes
 
 RewriteEngine On
+
+# Garante que o header Authorization (token de login) chegue no PHP.
+# Sem isso, em alguns modos de execução do PHP na hospedagem, o
+# usuário loga normalmente mas fica "deslogado" pra tudo que
+# depende do token (pedidos, favoritos, perfil, endereços).
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.php [QSA,L]
