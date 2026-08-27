@@ -20,8 +20,10 @@ const CATEGORIES = [
   { id:'COMBOS',           label:'Combos',  icon:'layers-outline' },
   { id:'ACOMPANHAMENTOS',  label:'Acomp.',  icon:'restaurant-outline' },
   { id:'BEBIDAS',          label:'Bebidas', icon:'cafe-outline' },
-  { id:'INGREDIENTES',     label:'Extras',  icon:'add-circle-outline' },
 ];
+// INGREDIENTES não é uma categoria navegável (nem aba própria, nem dentro de
+// "Todos") — esses produtos só existem pra alimentar a seção "Quer
+// adicionar algo?" dentro da tela de detalhe dos lanches.
 
 let activeCategory = 'todos';
 let activeScreen  = 'home';
@@ -363,10 +365,16 @@ function gridCardHTML(d, i, opts = {}) {
   `;
 }
 
+// Catálogo navegável: exclui INGREDIENTES (são só os extras dos lanches,
+// não aparecem como produto próprio em nenhuma aba nem em "Todos").
+function browsableCatalog() {
+  return DRINKS.filter(function(d) { return d.category !== 'INGREDIENTES'; });
+}
+
 function renderGrid() {
   const grid = document.getElementById('products-grid');
   if (!grid) return;
-  grid.innerHTML = DRINKS.map((d,i) => gridCardHTML(d,i)).join('');
+  grid.innerHTML = browsableCatalog().map((d,i) => gridCardHTML(d,i)).join('');
   bindGridEvents(grid);
   updateCount();
 }
@@ -751,7 +759,7 @@ function updateCount(n) {
     el.className = 'products-grid__count';
     document.querySelector('.products-grid__title')?.insertAdjacentElement('afterend', el);
   }
-  const total = n ?? DRINKS.length;
+  const total = n ?? browsableCatalog().length;
   const cat   = CATEGORIES.find(c => c.id === activeCategory);
   el.textContent = activeCategory === 'todos'
     ? `${total} produto${total!==1?'s':''}`
@@ -1273,7 +1281,7 @@ function renderFavorites() {
   const grid  = document.getElementById('favorites-grid');
   const empty = document.getElementById('favorites-empty');
   if (!grid) return;
-  const items = DRINKS.filter(d => favorites.has(d.key));
+  const items = browsableCatalog().filter(d => favorites.has(d.key));
   if (items.length === 0) {
     grid.innerHTML = '';
     empty.style.display = 'flex';
