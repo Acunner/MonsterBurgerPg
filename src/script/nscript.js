@@ -85,14 +85,19 @@ function normalizeProduct(row) {
     key:        String(row.id),   // ID global unico (1-99, 100-199, 200-299)
     brand:      brandId,
     brandLabel: row.marca || 'Outros',
-    // Lanches mostram só o nome (sem gramatura ao lado); as outras categorias
-    // continuam mostrando o peso/volume, que ajuda a diferenciar porção/bebida.
-    name:       row.table_name === 'LANCHES'
+    // Lanches e combos mostram só o nome (sem gramatura/tamanho ao lado);
+    // as outras categorias continuam mostrando o peso/volume, que ajuda a
+    // diferenciar porção/bebida.
+    name:       (row.table_name === 'LANCHES' || row.table_name === 'COMBOS')
                   ? row.nome
                   : row.nome + ' ' + row.ml + (row.table_name === 'BEBIDAS' ? 'ml' : 'g'),
     baseName:   row.nome,
     description: row.descricao || '',
     ingredients: (row.ingredientes || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+    // Nos COMBOS esse campo foi reaproveitado: guarda o tamanho (ml) do
+    // refrigerante que o combo oferece (350 = lata, 600 = garrafa), pra
+    // bater com o `ml` real das BEBIDAS e filtrar os sabores disponíveis.
+    ml:         Number(row.ml) || 0,
     price:      Number(row.preco),
     salePrice:  onSale ? Number(row.valor_promocional) : null,
     onSale:     onSale,
@@ -397,7 +402,7 @@ function bindGridEvents(container) {
 /* ═══════════════════════════════════════════════════════════
    TELA DE DETALHE / PERSONALIZAR PRODUTO
    ═══════════════════════════════════════════════════════════ */
-let pdState = null; // { key, qty, removed: Set<string>, added: { [ingredientKey]: qty } }
+let pdState = null; // { key, qty, removed: Set<string>, added: { [ingredientKey]: qty }, drink: bebidaKey|null }
 
 function ensurePDOverlay() {
   if (document.getElementById('pd-overlay')) return;
@@ -413,7 +418,7 @@ function ensurePDOverlay() {
 function openProductDetail(key) {
   const d = getDrinkByKey(key);
   if (!d) return;
-  pdState = { key: key, qty: 1, removed: new Set(), added: {} };
+  pdState = { key: key, qty: 1, removed: new Set(), added: {}, drink: null };
   renderProductDetail();
   document.getElementById('pd-overlay')?.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -423,6 +428,14 @@ function closeProductDetail() {
   document.getElementById('pd-overlay')?.classList.remove('open');
   document.body.style.overflow = '';
   pdState = null;
+}
+
+// Pão e carne são a base do lanche — não fazem sentido como opção de
+// retirada, então ficam de fora da lista de "Personalizar" (mas continuam
+// aparecendo normalmente na lista de ingredientes/descrição).
+function isLockedIngredient(ing) {
+  const norm = ing.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return norm.indexOf('pao') !== -1 || norm.indexOf('carne') !== -1 || norm.indexOf('hamburguer') !== -1;
 }
 
 // Mostra a descrição do lanche como lista (um ingrediente por linha) em vez
@@ -447,14 +460,33 @@ function renderProductDetail() {
   const discount   = d.onSale && d.salePrice ? Math.round((1 - d.salePrice / d.price) * 100) : 0;
   const finalPrice = discount ? d.price * (1 - discount / 100) : (d.salePrice ?? d.price);
   const isFav      = favorites.has(d.key);
-  const hasIngredients = d.ingredients && d.ingredients.length > 0;
+
+  // Retirar ingrediente e adicionar extra só existem nos lanches. Pão e
+  // carne saem da lista de retirada (são a base do lanche).
+  const customizableIngredients = d.category === 'LANCHES'
+    ? (d.ingredients || []).filter(function(ing) { return !isLockedIngredient(ing); })
+    : [];
+  const hasIngredients = customizableIngredients.length > 0;
 
   // Ingredientes extras disponíveis pra adicionar (categoria INGREDIENTES do cardápio)
-  const availableAddons = DRINKS.filter(function(p) { return p.table === 'INGREDIENTES'; });
+  const availableAddons = d.category === 'LANCHES'
+    ? DRINKS.filter(function(p) { return p.table === 'INGREDIENTES'; })
+    : [];
   const addonsTotal = availableAddons.reduce(function(sum, ing) {
     const q = pdState.added[ing.key] || 0;
     return sum + ing.price * q;
   }, 0);
+
+  // Combos: escolha do sabor do refrigerante (sem retirada, sem adicional).
+  // d.ml no combo guarda o tamanho do refrigerante oferecido (350 = lata,
+  // 600 = garrafa), que bate com o `ml` real de cada bebida cadastrada.
+  const comboDrinkOptions = d.category === 'COMBOS'
+    ? DRINKS.filter(function(p) { return p.table === 'BEBIDAS' && p.ml === d.ml; })
+    : [];
+  if (comboDrinkOptions.length && !pdState.drink) {
+    pdState.drink = comboDrinkOptions[0].key;
+  }
+
   const total = (finalPrice + addonsTotal) * pdState.qty;
 
   root.innerHTML = `
@@ -490,7 +522,7 @@ function renderProductDetail() {
             <h3 class="pd-customize__title">Personalizar</h3>
             <p class="pd-customize__hint">Desmarque o que não quiser no seu pedido.</p>
             <div class="pd-ingredient-list">
-              ${d.ingredients.map(function(ing) {
+              ${customizableIngredients.map(function(ing) {
                 const checked = !pdState.removed.has(ing);
                 return `
                   <label class="pd-ingredient">
@@ -523,6 +555,24 @@ function renderProductDetail() {
                       <button class="pd-addon-row__btn" data-action="inc" data-id="${ing.key}" aria-label="Aumentar ${ing.baseName||ing.name}">+</button>
                     </div>
                   </div>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+
+          ${comboDrinkOptions.length ? `
+          <div class="pd-combo-drink">
+            <h3 class="pd-addons__title">Escolha seu refrigerante</h3>
+            <p class="pd-customize__hint">${d.ml === 600 ? 'Garrafa 600ml inclusa no combo.' : 'Lata inclusa no combo.'}</p>
+            <div class="pd-drink-options">
+              ${comboDrinkOptions.map(function(opt) {
+                const selected = pdState.drink === opt.key;
+                return `
+                  <label class="pd-drink-option ${selected?'active':''}">
+                    <input type="radio" name="pd-drink" value="${opt.key}" ${selected?'checked':''}>
+                    <img src="${opt.img}" alt="${opt.baseName||opt.name}"
+                         onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
+                    <span>${opt.baseName || opt.name}</span>
+                  </label>`;
               }).join('')}
             </div>
           </div>` : ''}
@@ -644,6 +694,14 @@ function bindProductDetailEvents() {
     });
   });
 
+  root.querySelectorAll('input[name="pd-drink"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      if (!pdState) return;
+      pdState.drink = this.value;
+      renderProductDetail();
+    });
+  });
+
   root.querySelector('#pd-add-btn')?.addEventListener('click', function() {
     if (!pdState) return;
     const addedList = Object.keys(pdState.added)
@@ -652,7 +710,12 @@ function bindProductDetailEvents() {
         const ing = getDrinkByKey(id);
         return { id: id, name: ing ? (ing.baseName || ing.name) : id, price: ing ? ing.price : 0, qty: pdState.added[id] };
       });
-    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed), addedList);
+    let comboDrink = null;
+    if (pdState.drink) {
+      const opt = getDrinkByKey(pdState.drink);
+      if (opt) comboDrink = { id: opt.key, name: opt.baseName || opt.name };
+    }
+    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed), addedList, comboDrink);
     closeProductDetail();
   });
 }
@@ -726,18 +789,26 @@ function getDrinkByKey(key) {
   return DRINKS.find(d => d.key === key) || DEALS.find(d => d.key === key) || null;
 }
 
-function addToCart(key, qty, removed, added) {
+function addToCart(key, qty, removed, added, comboDrink) {
   qty = qty || 1;
   removed = removed || [];
   added = added || [];
   const drink = getDrinkByKey(key);
   if (!drink) return;
+  // Combo sem sabor escolhido (ex.: clicou direto em "Comprar" no card, sem
+  // abrir a tela de detalhe) — escolhe automaticamente o primeiro sabor do
+  // tamanho certo, pra sempre sair um pedido com refrigerante definido.
+  if (!comboDrink && drink.category === 'COMBOS' && drink.ml) {
+    const fallback = DRINKS.find(function(p) { return p.table === 'BEBIDAS' && p.ml === drink.ml; });
+    if (fallback) comboDrink = { id: fallback.key, name: fallback.baseName || fallback.name };
+  }
   const remPart = removed.length ? 'rem:' + removed.slice().sort().join('|') : '';
   const addPart = added.length ? 'add:' + added.map(function(a){ return a.id+'x'+a.qty; }).sort().join('|') : '';
-  const extra   = [remPart, addPart].filter(Boolean).join('::');
+  const drkPart = comboDrink ? 'drk:' + comboDrink.id : '';
+  const extra   = [remPart, addPart, drkPart].filter(Boolean).join('::');
   const cartKey = extra ? key + '::' + extra : key;
   if (cart[cartKey]) cart[cartKey].qty += qty;
-  else cart[cartKey] = { drink, qty:qty, removed: removed.slice(), added: added.slice() };
+  else cart[cartKey] = { drink, qty:qty, removed: removed.slice(), added: added.slice(), comboDrink: comboDrink || null };
   updateCartBadge();
   showToast(drink.name + ' adicionado ao carrinho! 🛒', 'success');
   document.querySelectorAll('.grid-card__btn[data-key="' + key + '"]').forEach(function(btn) {
@@ -763,6 +834,7 @@ function cartItemLabel(obj) {
   if (obj.added && obj.added.length) {
     label += ' (+ ' + obj.added.map(function(a){ return a.qty > 1 ? a.qty+'x '+a.name : a.name; }).join(', ') + ')';
   }
+  if (obj.comboDrink) label += ' (Refrigerante: ' + obj.comboDrink.name + ')';
   return label;
 }
 
@@ -877,6 +949,8 @@ function renderCartItem(obj) {
     ? `<p class="cart-item__note">Sem: ${obj.removed.join(', ')}</p>` : '';
   const addedNote = obj.added && obj.added.length
     ? `<p class="cart-item__note">+ ${obj.added.map(function(a){ return a.qty > 1 ? a.qty+'x '+a.name : a.name; }).join(', ')}</p>` : '';
+  const drinkNote = obj.comboDrink
+    ? `<p class="cart-item__note">Refrigerante: ${obj.comboDrink.name}</p>` : '';
   return `
     <div class="cart-item" data-key="${obj.cartKey}">
       <img class="cart-item__img" src="${d.img}" alt="${d.name}" width="60" height="80"
@@ -885,6 +959,7 @@ function renderCartItem(obj) {
         <p class="cart-item__name">${d.name}</p>
         ${removedNote}
         ${addedNote}
+        ${drinkNote}
         <p class="cart-item__price">${toBRL(price * qty)}</p>
         <p class="cart-item__unit">Un.: ${toBRL(price)}</p>
       </div>

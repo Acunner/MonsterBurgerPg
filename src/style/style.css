@@ -975,6 +975,45 @@ main {
   color: var(--color-bg-primary);
 }
 
+/* Escolha do refrigerante do combo */
+.pd-combo-drink { margin-top: var(--spacing-md); }
+.pd-drink-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.pd-drink-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.pd-drink-option input { position: absolute; opacity: 0; pointer-events: none; }
+.pd-drink-option img {
+  width: 40px;
+  height: 52px;
+  object-fit: contain;
+}
+.pd-drink-option span {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  color: rgba(255,255,255,0.75);
+}
+.pd-drink-option.active {
+  border-color: var(--color-accent);
+  background: rgba(255,255,255,0.09);
+  box-shadow: 0 0 0 1px var(--color-accent), 0 0 10px var(--color-accent-glow);
+}
+.pd-drink-option.active span { color: var(--color-text-primary); }
+
 .pd-footer {
   position: sticky;
   bottom: 0;
