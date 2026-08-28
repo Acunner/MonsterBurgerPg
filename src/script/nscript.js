@@ -810,7 +810,7 @@ function updateCount(n) {
    ═══════════════════════════════════════════════════════════ */
 
 // Número WhatsApp do dono da taberna (DDI+DDD+número, só dígitos)
-const WHATSAPP_OWNER = "5543998102357";
+const WHATSAPP_OWNER = "5543998060667";
 
 // Métodos de pagamento disponíveis
 const PAYMENT_METHODS = [
