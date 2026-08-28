@@ -105,6 +105,10 @@ function normalizeProduct(row) {
     dealExpiresAt: row.promocao_expira_em || null,
     stars:      Math.round(Number(row.rate || 4)),
     badge:      null, // tag "Vegetariano" removida do card/tela de produto
+    // Nas BEBIDAS, `retornavel` virou a flag "exclusivo de combo": bebida
+    // que só existe pra aparecer no seletor de sabor dos combos, sem
+    // aparecer como produto próprio na aba Bebidas/Todos.
+    comboOnly:  row.table_name === 'BEBIDAS' && Number(row.retornavel) === 1,
     img:        '/src/img/' + row.img,
   };
 }
@@ -403,7 +407,7 @@ function gridCardHTML(d, i, opts = {}) {
 // Catálogo navegável: exclui INGREDIENTES (são só os extras dos lanches,
 // não aparecem como produto próprio em nenhuma aba nem em "Todos").
 function browsableCatalog() {
-  return DRINKS.filter(function(d) { return d.category !== 'INGREDIENTES'; });
+  return DRINKS.filter(function(d) { return d.category !== 'INGREDIENTES' && !d.comboOnly; });
 }
 
 function renderGrid() {
