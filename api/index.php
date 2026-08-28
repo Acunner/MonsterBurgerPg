@@ -74,7 +74,7 @@ if ($path === '') $path = '/';
 $PRICE_DESC_TABLES = array('LANCHES','ACOMPANHAMENTOS');
 
 if ($method==='GET' && $path==='/catalog') {
-    $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
+    $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES','EXTRAS');
     $all = array();
     foreach ($tables as $t) {
         $orderBy = in_array($t, $PRICE_DESC_TABLES) ? 'preco DESC' : 'id';
@@ -84,7 +84,7 @@ if ($method==='GET' && $path==='/catalog') {
     json_ok($all);
 }
 if ($method==='GET' && $path==='/catalog/deals') {
-    $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
+    $tables = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES','EXTRAS');
     $all = array();
     foreach ($tables as $t) {
         $orderBy = in_array($t, $PRICE_DESC_TABLES) ? 'preco DESC' : 'id';
@@ -325,7 +325,7 @@ if ($method==='POST' && $path==='/orders') {
 /* ════════════════════════════════════════════════════════════
    AVALIAÇÕES (estrelas) — só quem já comprou pode avaliar
    ════════════════════════════════════════════════════════════ */
-$RATEABLE_TABLES = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES');
+$RATEABLE_TABLES = array('LANCHES','COMBOS','ACOMPANHAMENTOS','BEBIDAS','INGREDIENTES','EXTRAS');
 
 if ($method==='GET' && $path==='/ratings/status') {
     $u     = auth_user();

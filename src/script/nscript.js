@@ -126,7 +126,7 @@ async function loadCatalog() {
   }
 
   // IDs globalmente unicos: LANCHES 1-99, COMBOS 100-199, ACOMPANHAMENTOS 200-299,
-  // BEBIDAS 300-399, INGREDIENTES 400-499
+  // BEBIDAS 300-399, INGREDIENTES 400-499, EXTRAS 500-599
   // Sem necessidade de deduplicacao — cada linha tem ID unico
   DRINKS = catRes.data.map(normalizeProduct);
   DEALS  = dealRes.ok ? dealRes.data.map(normalizeProduct) : [];
@@ -407,7 +407,7 @@ function gridCardHTML(d, i, opts = {}) {
 // Catálogo navegável: exclui INGREDIENTES (são só os extras dos lanches,
 // não aparecem como produto próprio em nenhuma aba nem em "Todos").
 function browsableCatalog() {
-  return DRINKS.filter(function(d) { return d.category !== 'INGREDIENTES' && !d.comboOnly; });
+  return DRINKS.filter(function(d) { return d.category !== 'INGREDIENTES' && d.category !== 'EXTRAS' && !d.comboOnly; });
 }
 
 function renderGrid() {
@@ -515,9 +515,9 @@ function renderProductDetail() {
     : [];
   const hasIngredients = customizableIngredients.length > 0;
 
-  // Ingredientes extras disponíveis pra adicionar (categoria INGREDIENTES do cardápio)
+  // Adicionais disponíveis pro lanche (categoria EXTRAS do cardápio)
   const availableAddons = d.category === 'LANCHES'
-    ? DRINKS.filter(function(p) { return p.table === 'INGREDIENTES'; })
+    ? DRINKS.filter(function(p) { return p.table === 'EXTRAS'; })
     : [];
   const addonsTotal = availableAddons.reduce(function(sum, ing) {
     const q = pdState.added[ing.key] || 0;
