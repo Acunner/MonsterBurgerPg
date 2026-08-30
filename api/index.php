@@ -262,6 +262,8 @@ if ($method==='POST' && $path==='/orders') {
     $tot   = (float)(isset($b['total'])     ? $b['total']     : 0);
     $disc  = (float)(isset($b['discount'])  ? $b['discount']  : 0);
     $pay   = isset($b['payment_method'])    ? $b['payment_method'] : 'pix';
+    $cash  = ($pay==='dinheiro' && isset($b['cash_change_for']) && (float)$b['cash_change_for']>0)
+             ? (float)$b['cash_change_for'] : null;
     $coup  = isset($b['coupon_code'])       ? strtoupper(trim($b['coupon_code'])) : '';
     $addr_id   = isset($b['address_id']) && $b['address_id'] ? (int)$b['address_id'] : null;
     $addr_text = isset($b['address_text'])  ? trim($b['address_text']) : '';
@@ -282,9 +284,9 @@ if ($method==='POST' && $path==='/orders') {
         $pdo->prepare(
             'INSERT INTO orders
              (user_id,subtotal,freight,total,discount,address_id,address_text,
-              payment_method,coupon_code,guest_name,guest_phone)
-             VALUES (?,?,0,?,?,?,?,?,?,?,?)'
-        )->execute(array($uid,$sub,$tot,$disc,$addr_id,$addr_text,$pay,$coup?:null,$g_name?:null,$g_phone?:null));
+              payment_method,cash_change_for,coupon_code,guest_name,guest_phone)
+             VALUES (?,?,0,?,?,?,?,?,?,?,?,?)'
+        )->execute(array($uid,$sub,$tot,$disc,$addr_id,$addr_text,$pay,$cash,$coup?:null,$g_name?:null,$g_phone?:null));
         $oid = (int)$pdo->lastInsertId();
 
         $ins = $pdo->prepare(

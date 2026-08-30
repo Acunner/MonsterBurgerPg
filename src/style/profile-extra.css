@@ -270,6 +270,16 @@
 .payment-btn__icon { font-size: 1.4rem; line-height: 1; }
 .payment-btn__label { font-size: 0.78rem; text-align: center; }
 
+/* ─── Troco (pagamento em dinheiro) ─────────────────────── */
+.cash-change { margin-top: var(--spacing-sm); }
+.cash-change__hint { min-height: 1.1em; margin-top: 4px; }
+.cash-change__result {
+  font-size: 0.85rem;
+  color: #4caf50;
+  letter-spacing: .3px;
+}
+.cash-change__result--warn { color: #f97777; }
+
 /* ─── Endereço no checkout ───────────────────────────────── */
 .addr-tabs {
   display: flex;

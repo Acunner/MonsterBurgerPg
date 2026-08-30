@@ -116,6 +116,8 @@ if($method==='PUT' && preg_match('#^/orders/(\d+)$#',$path,$pm)){
     $payment = in_array($b['payment_method']??'', $validPay) ? $b['payment_method'] : 'pix';
     $addr    = isset($b['address_text']) ? trim($b['address_text']) : '';
     $discount= (float)(isset($b['discount']) ? $b['discount'] : 0);
+    $cash    = ($payment==='dinheiro' && isset($b['cash_change_for']) && (float)$b['cash_change_for']>0)
+               ? (float)$b['cash_change_for'] : null;
 
     // subtotal/total recalculados no servidor a partir dos itens recebidos
     // (não confia só no que o front mandou pronto)
@@ -128,8 +130,8 @@ if($method==='PUT' && preg_match('#^/orders/(\d+)$#',$path,$pm)){
     $pdo = db();
     $pdo->beginTransaction();
     try{
-        $sql = 'UPDATE orders SET subtotal=?, total=?, discount=?, address_text=?, payment_method=?';
-        $params = [$subtotal, $total, $discount, $addr ?: null, $payment];
+        $sql = 'UPDATE orders SET subtotal=?, total=?, discount=?, address_text=?, payment_method=?, cash_change_for=?';
+        $params = [$subtotal, $total, $discount, $addr ?: null, $payment, $cash];
         if($status){ $sql .= ', status=?'; $params[] = $status; }
         $sql .= ' WHERE id=?';
         $params[] = $oid;

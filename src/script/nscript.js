@@ -830,6 +830,7 @@ let checkoutState = {
   newAddress:    { street:'', number:'', complement:'' },
   guestName:     '',
   guestPhone:    '',
+  cashAmount:    '',   // valor que o cliente vai pagar em dinheiro (pra calcular o troco)
 };
 
 function getDrinkByKey(key) {
@@ -956,6 +957,7 @@ function renderCart() {
                     </button>`;
           }).join('')}
         </div>
+        ${checkoutState.paymentMethod === 'dinheiro' ? renderCashChangeField(total) : ''}
       </div>
 
       <!-- Endereço -->
@@ -1016,6 +1018,27 @@ function renderCartItem(obj) {
         <button data-action="inc" data-key="${obj.cartKey}" aria-label="Aumentar">+</button>
       </div>
       <button class="cart-item__remove" data-action="remove" data-key="${obj.cartKey}" aria-label="Remover">✕</button>
+    </div>`;
+}
+
+// Campo de troco: só aparece quando o pagamento é em dinheiro. O cliente
+// informa com quanto vai pagar, e a gente já mostra o troco calculado.
+function renderCashChangeField(total) {
+  const amount = parseFloat(String(checkoutState.cashAmount).replace(',', '.'));
+  const hasAmount = !isNaN(amount) && amount > 0;
+  const change = hasAmount ? amount - total : null;
+  let resultHTML = '';
+  if (hasAmount) {
+    resultHTML = change >= 0
+      ? `<p class="cash-change__result">Troco: <strong>${toBRL(change)}</strong></p>`
+      : `<p class="cash-change__result cash-change__result--warn">Valor menor que o total do pedido.</p>`;
+  }
+  return `
+    <div class="field-group cash-change">
+      <label for="cash-amount">Vai pagar com quanto? (opcional)</label>
+      <input id="cash-amount" type="text" inputmode="decimal" placeholder="Ex.: 50,00"
+             value="${checkoutState.cashAmount}"/>
+      <div class="cash-change__hint" id="cash-change-result">${resultHTML}</div>
     </div>`;
 }
 
@@ -1125,10 +1148,29 @@ function bindCartEvents() {
   // Pagamento
   document.querySelectorAll('.payment-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
+      const changed = checkoutState.paymentMethod !== this.dataset.method;
       checkoutState.paymentMethod = this.dataset.method;
-      document.querySelectorAll('.payment-btn').forEach(function(b){ b.classList.remove('active'); });
-      this.classList.add('active');
+      if (changed && this.dataset.method !== 'dinheiro') checkoutState.cashAmount = '';
+      // Precisa re-renderizar pra mostrar/esconder o campo de troco
+      renderCart();
     });
+  });
+
+  // Campo de troco (dinheiro)
+  document.getElementById('cash-amount')?.addEventListener('input', function() {
+    checkoutState.cashAmount = this.value;
+    const { total } = cartTotals();
+    const resultEl = document.getElementById('cash-change-result');
+    if (!resultEl) return;
+    const amount = parseFloat(String(this.value).replace(',', '.'));
+    if (!isNaN(amount) && amount > 0) {
+      const change = amount - total;
+      resultEl.innerHTML = change >= 0
+        ? `<p class="cash-change__result">Troco: <strong>${toBRL(change)}</strong></p>`
+        : `<p class="cash-change__result cash-change__result--warn">Valor menor que o total do pedido.</p>`;
+    } else {
+      resultEl.innerHTML = '';
+    }
   });
 
   // Abas de endereço (logado)
@@ -1223,6 +1265,20 @@ async function checkout() {
 
   btn.textContent = 'Processando…'; btn.disabled = true;
 
+  // Em celular o window.open('_blank') costuma ser bloqueado (Safari/Chrome
+  // mobile são bem mais restritivos que desktop, ainda mais depois de um
+  // await). Nesse caso a gente navega a própria aba pro wa.me no final, o
+  // que sempre funciona e abre o app do WhatsApp direto. No desktop mantém
+  // o truque de abrir a aba em branco já aqui (dentro do clique) e só trocar
+  // o destino dela depois.
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const waWindow = isMobile ? null : window.open('', '_blank');
+
+  const cashAmountNum = checkoutState.paymentMethod === 'dinheiro'
+    ? parseFloat(String(checkoutState.cashAmount).replace(',', '.'))
+    : NaN;
+  const cashChangeFor = !isNaN(cashAmountNum) && cashAmountNum > 0 ? cashAmountNum : null;
+
   const payload = {
     items: items.map(function(obj) {
       return { id:obj.drink.id, table_name:obj.drink.table, name:cartItemLabel(obj),
@@ -1233,6 +1289,7 @@ async function checkout() {
     discount:       discount,
     coupon_code:    checkoutState.couponCode,
     payment_method: checkoutState.paymentMethod,
+    cash_change_for: cashChangeFor,
     address_id:     addressId,
     address_text:   addressText,
     guest_name:     guestName,
@@ -1245,6 +1302,7 @@ async function checkout() {
 
   if (!res.ok) {
     showToast('Erro ao registrar pedido: ' + (res.error||''), 'error');
+    if (waWindow && !waWindow.closed) waWindow.close();
     return;
   }
 
@@ -1268,6 +1326,9 @@ async function checkout() {
   if (discount > 0) msg += '*Desconto (' + checkoutState.couponCode + '):* − ' + toBRL(discount) + '%0A';
   msg += '*Total: ' + toBRL(total) + '*%0A';
   msg += '*Pagamento:* ' + (payLabel ? payLabel.label : checkoutState.paymentMethod) + '%0A';
+  if (cashChangeFor) {
+    msg += '*Troco para:* ' + toBRL(cashChangeFor) + ' (troco: ' + toBRL(cashChangeFor - total) + ')%0A';
+  }
   msg += '*Endereço:* ' + (addressText||'Retirada') + '%0A';
   if (guestName)  msg += '*Cliente:* ' + guestName + '%0A';
   if (guestPhone) msg += '*Telefone:* ' + guestPhone;
@@ -1278,12 +1339,20 @@ async function checkout() {
   Object.keys(cart).forEach(function(k){ delete cart[k]; });
   checkoutState.couponCode     = '';
   checkoutState.couponDiscount = 0;
+  checkoutState.cashAmount     = '';
   updateCartBadge();
 
   showToast('Pedido #' + orderId + ' confirmado!' + (pts>0?' +'+pts+' pts':''), 'success');
 
-  // Abre WhatsApp em nova aba
-  window.open(waUrl, '_blank');
+  // Abre o WhatsApp: em celular navega a própria aba (sempre funciona e abre
+  // o app); no desktop redireciona a aba em branco já aberta no clique.
+  if (isMobile) {
+    window.location.href = waUrl;
+  } else if (waWindow && !waWindow.closed) {
+    waWindow.location.href = waUrl;
+  } else {
+    window.open(waUrl, '_blank');
+  }
 
   // Volta para home
   setTimeout(function() {
