@@ -99,6 +99,8 @@ a{text-decoration:none;color:inherit;}
 .table-wrap th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .table-wrap td{padding:10px 14px;border-top:1px solid var(--border);font-size:.83rem;vertical-align:middle;}
 .table-wrap tr:hover td{background:rgba(255,255,255,.02);}
+.tr-daygroup td{background:var(--surface2);color:var(--accent);font-weight:700;text-transform:uppercase;font-size:.72rem;letter-spacing:.6px;padding:8px 14px;border-top:2px solid var(--border);}
+.tr-daygroup:hover td{background:var(--surface2);}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:600;}
 .badge-pendente{background:rgba(255,45,149,.15);color:var(--accent);}
 .badge-confirmado{background:rgba(76,175,80,.15);color:var(--success);}
@@ -176,11 +178,47 @@ a{text-decoration:none;color:inherit;}
 #toast.ok{border-color:rgba(76,175,80,.5);}
 #toast.err{border-color:rgba(224,85,85,.5);color:#f97777;}
 
+/* ── Grids reutilizáveis (viram 1 coluna no mobile) ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.grid-2 .span2{grid-column:span 2;}
+
+/* ── Menu mobile (hambúrguer + drawer) ── */
+.mobile-menu-btn{
+  display:none;background:transparent;border:1px solid var(--border);color:var(--text);
+  border-radius:8px;width:36px;height:36px;font-size:1.1rem;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1150;}
+.sidebar-backdrop.open{display:block;}
+
 /* ── Responsive ── */
 @media(max-width:768px){
-  .sidebar{display:none;}
+  .mobile-menu-btn{display:flex;}
+  .sidebar{
+    position:fixed;top:0;left:0;height:100vh;z-index:1200;width:250px;
+    transform:translateX(-100%);transition:transform .25s ease;
+    box-shadow:2px 0 20px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0);}
   .content{padding:1rem;}
-  .metrics{grid-template-columns:1fr 1fr;}
+  .topbar{padding:.7rem 1rem;flex-wrap:wrap;gap:.5rem;}
+  .metrics{grid-template-columns:1fr 1fr;gap:.6rem;}
+  .metric-card{padding:1rem;}
+  .metric-card__value{font-size:1.35rem;}
+  .toolbar{gap:.5rem;}
+  .toolbar input,.toolbar select{flex:1 1 140px;}
+  .section-hd{flex-wrap:wrap;gap:.5rem;}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .table-wrap table{min-width:640px;}
+  .modal{padding:1.25rem;border-radius:14px;}
+  .grid-2{grid-template-columns:1fr;}
+  .grid-2 .span2{grid-column:span 1;}
+  .modal-actions{flex-direction:column-reverse;align-items:stretch;gap:.5rem;}
+  .modal-actions>div{display:flex;flex-direction:column-reverse;gap:.5rem;}
+  .modal-actions .btn{width:100%;}
+}
+@media(max-width:420px){
+  .metrics{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -205,7 +243,8 @@ a{text-decoration:none;color:inherit;}
   <div class="shell">
 
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar__logo">Rock Burger <span>Admin Panel</span></div>
       <nav class="sidebar__nav">
         <div class="nav-item active" data-panel="dashboard"><span class="nav-item__icon">📊</span> Dashboard</div>
@@ -226,7 +265,10 @@ a{text-decoration:none;color:inherit;}
     <!-- Main -->
     <div class="main">
       <div class="topbar">
-        <span class="topbar__title" id="page-title">Dashboard</span>
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">☰</button>
+          <span class="topbar__title" id="page-title">Dashboard</span>
+        </div>
         <div class="topbar__actions">
           <span id="topbar-date" style="font-size:.8rem;color:var(--muted)"></span>
         </div>
@@ -602,7 +644,7 @@ a{text-decoration:none;color:inherit;}
         <option value="EXTRAS">Extras</option>
       </select>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+    <div class="grid-2">
       <div class="field"><label>Nome</label><input id="mp-nome" type="text"/></div>
       <div class="field"><label>Marca</label><input id="mp-marca" type="text"/></div>
       <div class="field"><label>Peso/Vol. (g ou ml)</label><input id="mp-ml" type="number"/></div>
@@ -635,7 +677,7 @@ a{text-decoration:none;color:inherit;}
   <div class="modal">
     <h2>Nova Despesa</h2>
     <div class="field"><label>Descrição</label><input id="me-desc" type="text" placeholder="Reposição de estoque…"/></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+    <div class="grid-2">
       <div class="field"><label>Categoria</label>
         <select id="me-cat">
           <option>Estoque</option><option>Aluguel</option><option>Funcionários</option>
@@ -643,7 +685,7 @@ a{text-decoration:none;color:inherit;}
         </select>
       </div>
       <div class="field"><label>Valor (R$)</label><input id="me-val" type="number" step=".01"/></div>
-      <div class="field" style="grid-column:span 2"><label>Data</label><input id="me-date" type="date"/></div>
+      <div class="field span2"><label>Data</label><input id="me-date" type="date"/></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-expense')">Cancelar</button>
@@ -656,7 +698,7 @@ a{text-decoration:none;color:inherit;}
 <div class="modal-overlay" id="modal-coupon">
   <div class="modal">
     <h2>Novo Cupom</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+    <div class="grid-2">
       <div class="field"><label>Código</label><input id="mc-code" type="text" placeholder="PROMO10" style="text-transform:uppercase"/></div>
       <div class="field"><label>Tipo</label>
         <select id="mc-type"><option value="percent">Percentual (%)</option><option value="fixed">Fixo (R$)</option></select>
@@ -809,8 +851,17 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     if(panel==='coupons')  loadCoupons();
     if(panel==='users')    loadUsers();
     if(panel==='staff')    loadStaff();
+    closeMobileMenu();
   });
 });
+
+// ── Menu mobile (hambúrguer / drawer) ──────────────────────────
+function openMobileMenu(){ $('sidebar')?.classList.add('open'); $('sidebar-backdrop')?.classList.add('open'); }
+function closeMobileMenu(){ $('sidebar')?.classList.remove('open'); $('sidebar-backdrop')?.classList.remove('open'); }
+$('mobile-menu-btn')?.addEventListener('click', function(){
+  $('sidebar')?.classList.contains('open') ? closeMobileMenu() : openMobileMenu();
+});
+$('sidebar-backdrop')?.addEventListener('click', closeMobileMenu);
 
 // ════════════════════════════════════════════════════════════
 //  DASHBOARD
@@ -868,6 +919,24 @@ const PAY_LABELS={pix:'PIX',dinheiro:'Dinheiro',cartao_credito:'Crédito',cartao
 
 let ordersCache = {};
 
+// "Dia de trabalho" da lanchonete: a virada não é à meia-noite, é às 3h da
+// manhã (pedido de 1h da madrugada ainda é "de ontem"). Usado pra dividir a
+// lista de pedidos em Hoje / Ontem / dias anteriores.
+function businessDateOf(dateInput){
+  const dt = new Date(dateInput);
+  if(dt.getHours() < 3) dt.setDate(dt.getDate() - 1);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function businessDayLabel(dateInput){
+  const bd    = businessDateOf(dateInput);
+  const today = businessDateOf(new Date());
+  const diffDays = Math.round((today - bd) / 86400000);
+  if(diffDays === 0) return 'Hoje';
+  if(diffDays === 1) return 'Ontem';
+  return bd.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
 async function loadOrders(){
   const status = $('order-filter-status').value;
   const url    = status ? `/orders?status=${status}` : '/orders';
@@ -876,7 +945,19 @@ async function loadOrders(){
   ordersCache = {};
   res.data.forEach(o => ordersCache[o.id] = o);
   const tbody = $('orders-tbody');
-  tbody.innerHTML = res.data.map(o=>`
+
+  // Pedidos já vêm ordenados do mais novo pro mais antigo, então o grupo
+  // (dia de trabalho) só muda pra frente — dá pra inserir o divisor conforme
+  // percorre a lista, sem precisar reordenar nada.
+  let lastDayKey = null;
+  tbody.innerHTML = res.data.map(o=>{
+    const dayKey = businessDateOf(o.created_at).getTime();
+    let divider = '';
+    if(dayKey !== lastDayKey){
+      lastDayKey = dayKey;
+      divider = `<tr class="tr-daygroup"><td colspan="9">${businessDayLabel(o.created_at)}</td></tr>`;
+    }
+    return divider + `
     <tr>
       <td><strong>#${o.id}</strong></td>
       <td>${o.customer_name||'—'}</td>
@@ -892,7 +973,8 @@ async function loadOrders(){
                 onclick="confirmOrderWhatsApp(${o.id})">Confirmar no WhatsApp</button>
         <button class="btn btn-ghost" style="font-size:.75rem;padding:5px 10px" onclick="printOrder(${o.id})">🖨️ Imprimir</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ── Impressão do pedido: via cozinha + via entregador ──────────
