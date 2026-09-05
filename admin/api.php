@@ -39,7 +39,8 @@ if($method==='POST' && $path==='/login'){
     $staff=$s->fetch();
     if(!$staff||!password_verify($b['password']??'',$staff['password_hash'])) json_err('Credenciais inválidas.',401);
     $token=new_token();
-    $exp=date('Y-m-d H:i:s',strtotime('+12 hours'));
+    $remember=!empty($b['remember']);
+    $exp=date('Y-m-d H:i:s',strtotime($remember ? '+30 days' : '+12 hours'));
     db()->prepare('INSERT INTO staff_sessions (staff_id,token,expires_at) VALUES (?,?,?)')->execute([$staff['id'],$token,$exp]);
     json_ok(['token'=>$token,'staff'=>['id'=>$staff['id'],'name'=>$staff['name'],'email'=>$staff['email'],'role'=>$staff['role']]]);
 }

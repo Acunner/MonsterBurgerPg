@@ -465,7 +465,10 @@ function ensurePDOverlay() {
 function openProductDetail(key) {
   const d = getDrinkByKey(key);
   if (!d) return;
-  pdState = { key: key, qty: 1, removed: new Set(), added: {}, drink: null };
+  pdState = {
+    key: key, qty: 1, removed: new Set(), added: {}, drink: null,
+    ponto: d.category === 'LANCHES' ? 'Ao ponto' : null,
+  };
   renderProductDetail();
   document.getElementById('pd-overlay')?.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -563,6 +566,21 @@ function renderProductDetail() {
           ${pdDescriptionListHTML(d)}
 
           <div class="pd-rate" id="pd-rate-widget"></div>
+
+          ${d.category === 'LANCHES' ? `
+          <div class="pd-ponto">
+            <h3 class="pd-addons__title">Ponto da carne</h3>
+            <div class="pd-ponto-options">
+              ${PONTO_OPTIONS.map(function(p) {
+                const selected = pdState.ponto === p;
+                return `
+                  <label class="pd-ponto-option ${selected?'active':''}">
+                    <input type="radio" name="pd-ponto" value="${p}" ${selected?'checked':''}>
+                    <span>${p}</span>
+                  </label>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
 
           ${hasIngredients ? `
           <div class="pd-customize">
@@ -749,6 +767,14 @@ function bindProductDetailEvents() {
     });
   });
 
+  root.querySelectorAll('input[name="pd-ponto"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      if (!pdState) return;
+      pdState.ponto = this.value;
+      renderProductDetail();
+    });
+  });
+
   root.querySelector('#pd-add-btn')?.addEventListener('click', function() {
     if (!pdState) return;
     const addedList = Object.keys(pdState.added)
@@ -762,7 +788,7 @@ function bindProductDetailEvents() {
       const opt = getDrinkByKey(pdState.drink);
       if (opt) comboDrink = { id: opt.key, name: opt.baseName || opt.name };
     }
-    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed), addedList, comboDrink);
+    addToCart(pdState.key, pdState.qty, Array.from(pdState.removed), addedList, comboDrink, pdState.ponto);
     closeProductDetail();
   });
 }
@@ -812,6 +838,9 @@ function updateCount(n) {
 // Número WhatsApp do dono da taberna (DDI+DDD+número, só dígitos)
 const WHATSAPP_OWNER = "5543998060667";
 
+// Pontos disponíveis pro hambúrguer (só lanches — combos/outros não têm)
+const PONTO_OPTIONS = ['Mal passado', 'Ao ponto', 'Bem passado'];
+
 // Métodos de pagamento disponíveis
 const PAYMENT_METHODS = [
   { id:'pix',             label:'PIX',             icon:'💠' },
@@ -837,7 +866,7 @@ function getDrinkByKey(key) {
   return DRINKS.find(d => d.key === key) || DEALS.find(d => d.key === key) || null;
 }
 
-function addToCart(key, qty, removed, added, comboDrink) {
+function addToCart(key, qty, removed, added, comboDrink, ponto) {
   qty = qty || 1;
   removed = removed || [];
   added = added || [];
@@ -850,13 +879,16 @@ function addToCart(key, qty, removed, added, comboDrink) {
     const fallback = DRINKS.find(function(p) { return p.table === 'BEBIDAS' && p.ml === drink.ml; });
     if (fallback) comboDrink = { id: fallback.key, name: fallback.baseName || fallback.name };
   }
+  // Lanche sem ponto escolhido (comprou direto pelo card) — assume "Ao ponto".
+  if (!ponto && drink.category === 'LANCHES') ponto = 'Ao ponto';
   const remPart = removed.length ? 'rem:' + removed.slice().sort().join('|') : '';
   const addPart = added.length ? 'add:' + added.map(function(a){ return a.id+'x'+a.qty; }).sort().join('|') : '';
   const drkPart = comboDrink ? 'drk:' + comboDrink.id : '';
-  const extra   = [remPart, addPart, drkPart].filter(Boolean).join('::');
+  const ptPart  = ponto ? 'pt:' + ponto : '';
+  const extra   = [remPart, addPart, drkPart, ptPart].filter(Boolean).join('::');
   const cartKey = extra ? key + '::' + extra : key;
   if (cart[cartKey]) cart[cartKey].qty += qty;
-  else cart[cartKey] = { drink, qty:qty, removed: removed.slice(), added: added.slice(), comboDrink: comboDrink || null };
+  else cart[cartKey] = { drink, qty:qty, removed: removed.slice(), added: added.slice(), comboDrink: comboDrink || null, ponto: ponto || null };
   updateCartBadge();
   showToast(drink.name + ' adicionado ao carrinho! 🛒', 'success');
   document.querySelectorAll('.grid-card__btn[data-key="' + key + '"]').forEach(function(btn) {
@@ -878,6 +910,7 @@ function cartUnitPrice(obj) {
 
 function cartItemLabel(obj) {
   let label = obj.drink.name;
+  if (obj.ponto) label += ' (Ponto: ' + obj.ponto + ')';
   if (obj.removed && obj.removed.length) label += ' (sem ' + obj.removed.join(', ') + ')';
   if (obj.added && obj.added.length) {
     label += ' (+ ' + obj.added.map(function(a){ return a.qty > 1 ? a.qty+'x '+a.name : a.name; }).join(', ') + ')';
@@ -1000,12 +1033,15 @@ function renderCartItem(obj) {
     ? `<p class="cart-item__note">+ ${obj.added.map(function(a){ return a.qty > 1 ? a.qty+'x '+a.name : a.name; }).join(', ')}</p>` : '';
   const drinkNote = obj.comboDrink
     ? `<p class="cart-item__note">Refrigerante: ${obj.comboDrink.name}</p>` : '';
+  const pontoNote = obj.ponto
+    ? `<p class="cart-item__note">Ponto: ${obj.ponto}</p>` : '';
   return `
     <div class="cart-item" data-key="${obj.cartKey}">
       <img class="cart-item__img" src="${d.img}" alt="${d.name}" width="60" height="80"
            onerror="this.onerror=null;this.src='/src/img/default-produto.svg'"/>
       <div class="cart-item__info">
         <p class="cart-item__name">${d.name}</p>
+        ${pontoNote}
         ${removedNote}
         ${addedNote}
         ${drinkNote}
@@ -1265,15 +1301,6 @@ async function checkout() {
 
   btn.textContent = 'Processando…'; btn.disabled = true;
 
-  // Em celular o window.open('_blank') costuma ser bloqueado (Safari/Chrome
-  // mobile são bem mais restritivos que desktop, ainda mais depois de um
-  // await). Nesse caso a gente navega a própria aba pro wa.me no final, o
-  // que sempre funciona e abre o app do WhatsApp direto. No desktop mantém
-  // o truque de abrir a aba em branco já aqui (dentro do clique) e só trocar
-  // o destino dela depois.
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  const waWindow = isMobile ? null : window.open('', '_blank');
-
   const cashAmountNum = checkoutState.paymentMethod === 'dinheiro'
     ? parseFloat(String(checkoutState.cashAmount).replace(',', '.'))
     : NaN;
@@ -1302,7 +1329,6 @@ async function checkout() {
 
   if (!res.ok) {
     showToast('Erro ao registrar pedido: ' + (res.error||''), 'error');
-    if (waWindow && !waWindow.closed) waWindow.close();
     return;
   }
 
@@ -1342,22 +1368,16 @@ async function checkout() {
   checkoutState.cashAmount     = '';
   updateCartBadge();
 
-  showToast('Pedido #' + orderId + ' confirmado!' + (pts>0?' +'+pts+' pts':''), 'success');
+  showToast('Pedido #' + orderId + ' confirmado! Abrindo WhatsApp…' + (pts>0?' +'+pts+' pts':''), 'success');
 
-  // Abre o WhatsApp: em celular navega a própria aba (sempre funciona e abre
-  // o app); no desktop redireciona a aba em branco já aberta no clique.
-  if (isMobile) {
-    window.location.href = waUrl;
-  } else if (waWindow && !waWindow.closed) {
-    waWindow.location.href = waUrl;
-  } else {
-    window.open(waUrl, '_blank');
-  }
-
-  // Volta para home
+  // Envia a notificação do pedido pro dono via WhatsApp navegando a própria
+  // aba pro wa.me. window.open() (mesmo aberto "antes" de um await) estava
+  // sendo bloqueado como pop-up em vários navegadores/celulares — navegar a
+  // aba atual nunca é bloqueado, porque não é uma janela/aba nova, é só uma
+  // troca de página. Funciona igual em celular e desktop.
   setTimeout(function() {
-    document.querySelector('.botonBar .list[data-target="home"]')?.click();
-  }, 1500);
+    window.location.href = waUrl;
+  }, 400);
 }
 
 

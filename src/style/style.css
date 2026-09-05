@@ -1028,6 +1028,35 @@ main {
 }
 .pd-drink-option.active span { color: var(--color-text-primary); }
 
+/* Ponto da carne (só lanches) */
+.pd-ponto { margin-top: var(--spacing-md); }
+.pd-ponto-options {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.pd-ponto-option {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.pd-ponto-option input { position: absolute; opacity: 0; pointer-events: none; }
+.pd-ponto-option span {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.75);
+}
+.pd-ponto-option.active {
+  border-color: var(--color-accent);
+  background: rgba(255,255,255,0.09);
+  box-shadow: 0 0 0 1px var(--color-accent), 0 0 10px var(--color-accent-glow);
+}
+.pd-ponto-option.active span { color: var(--color-text-primary); }
+
 .pd-footer {
   position: sticky;
   bottom: 0;
